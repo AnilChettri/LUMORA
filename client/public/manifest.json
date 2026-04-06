@@ -1,0 +1,54 @@
+{
+  "name": "Lumi - Mental Health Companion",
+  "short_name": "Lumi",
+  "description": "Your compassionate AI-powered mental health companion featuring mood tracking, guided exercises, calming music, journaling, and a supportive community.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF8FF",
+  "theme_color": "#8B5CF6",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["health", "lifestyle", "medical"],
+  "icons": [
+    {
+      "src": "/Quantum Shift.jpg",
+      "sizes": "any",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/Quantum Shift.jpg",
+      "sizes": "any",
+      "type": "image/jpeg",
+      "form_factor": "wide"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Talk to Lumi",
+      "short_name": "Lumi",
+      "description": "Start a conversation with your AI companion",
+      "url": "/voice",
+      "icons": [{ "src": "/Quantum Shift.jpg", "sizes": "any", "type": "image/jpeg" }]
+    },
+    {
+      "name": "Check Mood",
+      "short_name": "Mood",
+      "description": "Log your current mood",
+      "url": "/mood",
+      "icons": [{ "src": "/Quantum Shift.jpg", "sizes": "any", "type": "image/jpeg" }]
+    },
+    {
+      "name": "Breathing Exercise",
+      "short_name": "Breathe",
+      "description": "Start a guided breathing exercise",
+      "url": "/exercises",
+      "icons": [{ "src": "/Quantum Shift.jpg", "sizes": "any", "type": "image/jpeg" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

@@ -1,0 +1,51 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="lumiGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#9D4EDD;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#7209B7;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#560BAD;stop-opacity:1" />
+    </linearGradient>
+    <radialGradient id="glowGradient" cx="50%" cy="50%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.4" />
+      <stop offset="100%" style="stop-color:#FFFFFF;stop-opacity:0" />
+    </radialGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="256" fill="url(#lumiGradient)"/>
+  
+  <!-- Glow effect -->
+  <circle cx="256" cy="256" r="240" fill="url(#glowGradient)"/>
+  
+  <!-- Main symbol: Stylized light/mind integration -->
+  <!-- Left hemisphere (darker) - mind/consciousness -->
+  <circle cx="200" cy="256" r="100" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="8"/>
+  
+  <!-- Right hemisphere (lighter) - illumination -->
+  <circle cx="312" cy="256" r="100" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="8"/>
+  
+  <!-- Central light burst - representing insight/awareness -->
+  <g transform="translate(256, 256)">
+    <!-- Core -->
+    <circle cx="0" cy="0" r="30" fill="rgba(255,255,255,0.9)"/>
+    
+    <!-- Light rays -->
+    <g stroke="rgba(255,255,255,0.8)" stroke-width="6" stroke-linecap="round">
+      <line x1="0" y1="-60" x2="0" y2="-85"/>
+      <line x1="42.4" y1="-42.4" x2="60" y2="-60"/>
+      <line x1="60" y1="0" x2="85" y2="0"/>
+      <line x1="42.4" y1="42.4" x2="60" y2="60"/>
+      <line x1="0" y1="60" x2="0" y2="85"/>
+      <line x1="-42.4" y1="42.4" x2="-60" y2="60"/>
+      <line x1="-60" y1="0" x2="-85" y2="0"/>
+      <line x1="-42.4" y1="-42.4" x2="-60" y2="-60"/>
+    </g>
+  </g>
+  
+  <!-- Subtle wave pattern at bottom -->
+  <path d="M 150 300 Q 200 280 256 300 T 362 300" 
+        stroke="rgba(255,255,255,0.4)" 
+        stroke-width="3" 
+        fill="none" 
+        stroke-linecap="round"/>
+</svg>
