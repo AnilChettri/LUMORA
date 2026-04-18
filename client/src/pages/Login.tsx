@@ -67,9 +67,6 @@ export default function Login() {
     },
   });
 
-  useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-  }, [queryClient]);
 
   return (
     <AppShell showNav={false} showCrisisButton={false}>
@@ -151,6 +148,18 @@ export default function Login() {
             {isLoading && (
               <motion.div variants={itemVariants} className="md:col-span-3 flex justify-center py-12">
                 <LoadingSpinner size="lg" variant="neural" />
+              </motion.div>
+            )}
+
+            {!isLoading && !demoUsers?.length && (
+              <motion.div variants={itemVariants} className="md:col-span-3 py-12">
+                <Card className="p-8 text-center border-dashed border-white/10 bg-white/5">
+                  <AlertCircle className="w-10 h-10 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground mb-4">We couldn't load the demo companions.</p>
+                  <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ["/api/auth/demo-users"] })}>
+                    Try Again
+                  </Button>
+                </Card>
               </motion.div>
             )}
 
