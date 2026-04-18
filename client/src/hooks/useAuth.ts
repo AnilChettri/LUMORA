@@ -39,7 +39,13 @@ export function useAuth() {
       firstName: "Guest",
       lastName: "Explorer",
       email: "guest@example.com",
+      profileImageUrl: null,
       isGuest: true,
+      hasCompletedTour: true,
+      hasConsentedCamera: false,
+      hasConsentedMic: false,
+      hasConsentedData: false,
+      currentMood: "neutral",
       createdAt: new Date(),
       updatedAt: new Date(),
     } as User;

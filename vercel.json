@@ -4,13 +4,13 @@
   "outputDirectory": "dist/public",
   "cleanUrls": true,
   "functions": {
-    "dist/index.cjs": {
+    "api/index.ts": {
       "memory": 1024,
       "maxDuration": 10
     }
   },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "dist/index.cjs" },
+    { "source": "/api/(.*)", "destination": "/api/index.ts" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
