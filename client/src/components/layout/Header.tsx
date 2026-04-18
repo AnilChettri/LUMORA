@@ -23,25 +23,14 @@ const navItems = [
 ];
 
 export function Header() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const [location, setLocation] = useLocation();
   const queryClient = useQueryClient();
 
-  const logoutMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-      if (!response.ok) {
-        throw new Error("Logout failed");
-      }
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      setLocation("/login");
-    },
-  });
+  const handleLogout = async () => {
+    await logout();
+    setLocation("/login");
+  };
 
   const initials = user?.firstName && user?.lastName
     ? `${user.firstName[0]}${user.lastName[0]}`
@@ -144,13 +133,12 @@ export function Header() {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => logoutMutation.mutate()}
-                  disabled={logoutMutation.isPending}
+                  onClick={handleLogout}
                   className="text-destructive cursor-pointer"
                   data-testid="button-logout"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
-                  {logoutMutation.isPending ? "Logging out..." : "Log out"}
+                  Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

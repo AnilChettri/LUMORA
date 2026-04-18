@@ -1,5 +1,7 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+import { guestData } from "./guestData";
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
@@ -12,6 +14,21 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  const isGuest = localStorage.getItem("lumi_guest_user");
+
+  if (isGuest) {
+    // Intercept guest requests
+    if (url === "/api/journals" && method === "POST") {
+      const entry = guestData.saveJournal(data as any);
+      return new Response(JSON.stringify(entry), { status: 200 });
+    }
+    if (url === "/api/moods" && method === "POST") {
+      const mood = guestData.saveMood((data as any).mood, (data as any).confidence);
+      return new Response(JSON.stringify(mood), { status: 200 });
+    }
+    // Add more guest interceptions as needed
+  }
+
   const res = await fetch(url, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
@@ -29,7 +46,19 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey.join("/") as string, {
+    const url = queryKey.join("/") as string;
+    const isGuest = localStorage.getItem("lumi_guest_user");
+
+    if (isGuest) {
+      if (url === "/api/journals") {
+        return guestData.getJournals() as any;
+      }
+      if (url === "/api/moods") {
+        return guestData.getMoods() as any;
+      }
+    }
+
+    const res = await fetch(url, {
       credentials: "include",
     });
 

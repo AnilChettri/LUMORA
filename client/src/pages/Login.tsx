@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/animations/LoadingSpinner";
 import { AppShell } from "@/components/layout/AppShell";
 import { ParticleField } from "@/components/animations/ParticleField";
-import { Sparkles, Sun, ArrowRight, AlertCircle } from "lucide-react";
+import { Sparkles, Sun, ArrowRight, AlertCircle, UserCircle } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface DemoUserPreview {
@@ -37,6 +38,13 @@ const itemVariants = {
 export default function Login() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
+  const { loginAsGuest, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      setLocation("/");
+    }
+  }, [isAuthenticated, setLocation]);
 
   const { data: demoUsers, isLoading } = useQuery<DemoUserPreview[]>({
     queryKey: ["/api/auth/demo-users"],
@@ -135,8 +143,21 @@ export default function Login() {
               variants={itemVariants}
               className="mt-4 text-lg text-muted-foreground"
             >
-              Sign in instantly with one of our demo personas. You can always switch later to see the journey from a different perspective.
+              Sign in instantly with one of our demo personas or continue as a guest to explore.
             </motion.p>
+
+            <motion.div variants={itemVariants} className="mt-8">
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="gap-2 border-purple-500/50 hover:bg-purple-500/10"
+                onClick={() => loginAsGuest()}
+                data-testid="button-login-guest"
+              >
+                <UserCircle className="w-5 h-5" />
+                Continue as Guest
+              </Button>
+            </motion.div>
           </motion.div>
 
           <motion.div

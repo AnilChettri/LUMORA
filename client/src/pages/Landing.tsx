@@ -17,6 +17,7 @@ import {
   Lightbulb
 } from "lucide-react";
 import { Link } from "wouter";
+import { useAuth } from "@/hooks/useAuth";
 
 const features = [
   {
@@ -51,26 +52,6 @@ const features = [
   },
 ];
 
-const benefits = [
-  {
-    icon: Zap,
-    title: "Instant Relief",
-    stat: "92%",
-    statLabel: "Feel calmer after use",
-  },
-  {
-    icon: Target,
-    title: "Personalized",
-    stat: "24/7",
-    statLabel: "Available anytime",
-  },
-  {
-    icon: Lightbulb,
-    title: "Evidence-Based",
-    stat: "150K+",
-    statLabel: "Happy users",
-  },
-];
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -89,6 +70,7 @@ const itemVariants = {
 };
 
 export default function Landing() {
+  const { loginAsGuest } = useAuth();
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950 relative overflow-hidden">
       {/* Subtle gradient background */}
@@ -154,9 +136,8 @@ export default function Landing() {
               variants={itemVariants}
               className="text-lg md:text-xl text-purple-100/75 max-w-xl mb-10 leading-relaxed font-light"
             >
-              Meet Lumi, your empathetic AI companion. Get instant support with 
-              <span className="text-purple-200 font-medium"> mood detection, guided exercises, and a supportive community</span> 
-              — available 24/7.
+              Meet Lumi, your empathetic AI companion. Get support with 
+              <span className="text-purple-200 font-medium"> mood detection, guided exercises, and a supportive community</span>.
             </motion.p>
 
             {/* CTA Buttons - Simple */}
@@ -179,12 +160,10 @@ export default function Landing() {
                 variant="outline" 
                 size="lg" 
                 className="text-lg px-8 py-7 rounded-lg border-2 border-purple-400/50 text-purple-100 hover:border-purple-400/80 hover:bg-purple-500/15 transition-all font-semibold"
-                asChild
-                data-testid="button-learn-more"
+                onClick={() => loginAsGuest()}
+                data-testid="button-try-as-guest"
               >
-                <a href="#features" className="flex items-center gap-2">
-                  Learn More
-                </a>
+                Try as Guest
               </Button>
             </motion.div>
 
@@ -242,33 +221,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Benefits Section - Simple Grid */}
-      <section className="relative z-10 px-6 py-14 border-t border-purple-500/10">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            className="grid md:grid-cols-3 gap-8"
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-          >
-            {benefits.map((benefit, i) => (
-              <motion.div
-                key={i}
-                variants={itemVariants}
-                className="p-8 rounded-xl border border-purple-500/20 bg-gradient-to-br from-purple-900/30 via-violet-900/20 to-purple-900/30 hover:border-purple-500/40 hover:bg-purple-900/40 transition-all"
-              >
-                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500/40 to-violet-500/40 flex items-center justify-center mb-4">
-                  <benefit.icon className="w-6 h-6 text-purple-300" />
-                </div>
-                <h3 className="text-2xl font-bold text-purple-100 mb-2">{benefit.stat}</h3>
-                <p className="text-purple-200/60 text-sm mb-3">{benefit.statLabel}</p>
-                <p className="text-purple-100 font-semibold">{benefit.title}</p>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
 
       {/* Features Section - Clean Cards */}
       <section id="features" className="relative z-10 px-6 py-20 bg-gradient-to-b from-transparent via-purple-950/20 to-transparent">
@@ -366,7 +318,7 @@ export default function Landing() {
                 </div>
                 <span className="font-bold text-lg text-purple-100">Lumi</span>
               </div>
-              <p className="text-purple-200/60 text-sm leading-relaxed">Your AI mental health companion, available 24/7</p>
+              <p className="text-purple-200/60 text-sm leading-relaxed">Your AI mental health companion</p>
             </div>
 
             <div>
