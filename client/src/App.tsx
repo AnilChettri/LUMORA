@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { AppShell } from "@/components/layout/AppShell";
 import { LoadingSpinner } from "@/components/animations/LoadingSpinner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useState, useEffect } from "react";
 
 // Eagerly loaded pages (small, frequently accessed)
 import Landing from "@/pages/Landing";
@@ -82,8 +82,21 @@ function AuthenticatedRoutes() {
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
+  const [showFallback, setShowFallback] = useState(false);
 
-  if (isLoading) {
+  useEffect(() => {
+    // If we're still loading after 3 seconds, show the fallback (Landing/Login)
+    const timer = setTimeout(() => {
+      if (isLoading) {
+        console.warn("Auth check timed out, falling back to unauthenticated view.");
+        setShowFallback(true);
+      }
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [isLoading]);
+
+  if (isLoading && !showFallback) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -94,7 +107,7 @@ function Router() {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || (isLoading && showFallback)) {
     return (
       <Switch>
         <Route path="/crisis" component={Crisis} />
