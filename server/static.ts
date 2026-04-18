@@ -4,9 +4,17 @@ import path from "path";
 import { fileURLToPath } from "node:url";
 
 export function serveStatic(app: Express) {
-  const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+  let moduleDir: string;
+  try {
+    moduleDir = path.dirname(fileURLToPath(import.meta.url));
+  } catch (e) {
+    // Fallback for CommonJS environment (bundled server)
+    moduleDir = __dirname;
+  }
+
   const candidatePaths = [
     path.resolve(process.cwd(), "dist", "public"),
+    path.resolve(moduleDir, "public"),
     path.resolve(moduleDir, "..", "dist", "public"),
   ];
   const distPath = candidatePaths.find((candidate) => fs.existsSync(candidate));
