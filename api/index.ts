@@ -1,3 +1,6 @@
-import app from "../server/index";
+import { app, httpServer, setupApp } from "../server/index";
 
-export default app;
+export default async function handler(req: any, res: any) {
+  await setupApp(app, httpServer);
+  return app(req, res);
+}

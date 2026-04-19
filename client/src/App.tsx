@@ -72,6 +72,15 @@ function AuthenticatedRoutes() {
             <Route path="/books" component={BooksSpace} />
             <Route path="/games" component={GamesSpace} />
             <Route path="/crisis" component={Crisis} />
+            
+            {/* Redirect /login to / for authenticated users */}
+            <Route path="/login">
+              {() => {
+                window.location.href = "/";
+                return null;
+              }}
+            </Route>
+
             <Route component={NotFound} />
           </Switch>
         </Suspense>
