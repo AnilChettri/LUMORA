@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { Header } from "@/components/layout/Header";
 import { Card } from "@/components/ui/card";
@@ -62,7 +62,6 @@ export default function GamesSpace() {
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
   const [location] = useLocation();
 
-  // Allow mood controller to deep-link directly into a specific game
   useEffect(() => {
     const params = new URLSearchParams(location.split("?")[1] || "");
     const gameId = params.get("game");
@@ -75,66 +74,101 @@ export default function GamesSpace() {
   }, [location]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen relative overflow-x-hidden">
       <Header />
 
-      <div className="container px-4 py-6 max-w-7xl mx-auto">
+      <div className="container px-4 py-12 max-w-7xl mx-auto">
         {!selectedGame ? (
-          <>
-            {/* Header */}
-            <div className="mb-6">
-              <h1 className="text-2xl font-display font-bold mb-2 flex items-center gap-2">
-                <Gamepad2 className="w-6 h-6 text-primary" />
-                Calming Games
-              </h1>
-              <p className="text-muted-foreground">
-                Mindful activities to help you relax
-              </p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-12"
+          >
+            {/* Immersive Header */}
+            <div className="flex flex-col md:flex-row items-end justify-between gap-6">
+               <div className="space-y-4">
+                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest">
+                     <Gamepad2 className="w-4 h-4" />
+                     Mindful Playground
+                  </div>
+                  <h1 className="text-5xl font-display font-bold tracking-tight">
+                     Flow <span className="gradient-text">State</span>
+                  </h1>
+                  <p className="text-muted-foreground text-lg max-w-xl leading-relaxed">
+                     Cognitive exercises designed to gently focus your mind and dissolve stress through interactive play.
+                  </p>
+               </div>
             </div>
 
             {/* Games Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {games.map((game, index) => (
                 <motion.div
                   key={game.id}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
+                  whileHover={{ y: -8 }}
+                  className="group"
                 >
                   <Card
-                    className="overflow-hidden hover-elevate cursor-pointer transition-all h-full flex flex-col"
-                    onClick={() => setSelectedGame(game.id)}
+                    className="overflow-hidden glass-card border-white/20 hover:border-primary/40 cursor-pointer transition-all duration-500 h-full flex flex-col rounded-[2.5rem] shadow-xl hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)]"
+                    onClick={() => {
+                        soundManager.playClick();
+                        setSelectedGame(game.id);
+                    }}
                     data-testid={`card-game-${game.id}`}
                   >
                     <div className={cn(
-                      "h-40 bg-gradient-to-br flex items-center justify-center shrink-0",
+                      "h-52 bg-gradient-to-br flex items-center justify-center shrink-0 relative overflow-hidden",
                       game.gradient
                     )}>
-                      <game.icon className="w-12 h-12 text-white/80" />
+                       <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors" />
+                       <div className="relative z-10 p-6 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 group-hover:scale-110 transition-transform duration-500">
+                          <game.icon className="w-16 h-16 text-white" />
+                       </div>
                     </div>
-                    <div className="p-4 flex-1 flex flex-col">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <h3 className="font-semibold text-lg">{game.title}</h3>
-                        <Badge variant="secondary" className="shrink-0 text-xs capitalize">
+                    <div className="p-8 flex-1 flex flex-col">
+                      <div className="flex items-start justify-between gap-2 mb-4">
+                        <h3 className="font-display font-bold text-2xl group-hover:text-primary transition-colors">{game.title}</h3>
+                        <Badge className="bg-primary/5 text-primary border-none text-[10px] uppercase font-bold tracking-widest px-2.5 py-1">
                           {game.difficulty}
                         </Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground mt-1">
+                      <p className="text-muted-foreground leading-relaxed flex-1">
                         {game.description}
                       </p>
+                      
+                      <div className="pt-6 border-t border-primary/5 flex items-center justify-between mt-8">
+                        <div className="flex items-center gap-2 text-primary font-bold text-sm">
+                          <Play className="w-4 h-4 fill-current" />
+                          <span>Enter Flow</span>
+                        </div>
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all">
+                           <Trophy className="w-5 h-5" />
+                        </div>
+                      </div>
                     </div>
                   </Card>
                 </motion.div>
               ))}
             </div>
-          </>
-        ) : selectedGame === "memory" ? (
-          <MemoryGame onBack={() => setSelectedGame(null)} />
-        ) : selectedGame === "breathing-game" ? (
-          <BubbleGame onBack={() => setSelectedGame(null)} />
-        ) : selectedGame === "color-flow" ? (
-          <ColorFlowGame onBack={() => setSelectedGame(null)} />
-        ) : null}
+          </motion.div>
+        ) : (
+           <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="max-w-4xl mx-auto"
+           >
+              {selectedGame === "memory" ? (
+                <MemoryGame onBack={() => setSelectedGame(null)} />
+              ) : selectedGame === "breathing-game" ? (
+                <BubbleGame onBack={() => setSelectedGame(null)} />
+              ) : selectedGame === "color-flow" ? (
+                <ColorFlowGame onBack={() => setSelectedGame(null)} />
+              ) : null}
+           </motion.div>
+        )}
       </div>
     </div>
   );
@@ -172,7 +206,6 @@ function MemoryGame({ onBack }: { onBack: () => void }) {
     if (cards[id].matched) return;
     if (flippedCards.includes(id)) return;
 
-    // Play click sound when card is flipped
     gameSounds.gameStart();
 
     const newFlipped = [...flippedCards, id];
@@ -186,7 +219,6 @@ function MemoryGame({ onBack }: { onBack: () => void }) {
       const [first, second] = newFlipped;
 
       if (cards[first].emoji === cards[second].emoji) {
-        // Play success sound for match
         gameSounds.correctMatch();
         setTimeout(() => {
           setCards(prev => prev.map(card =>
@@ -197,7 +229,6 @@ function MemoryGame({ onBack }: { onBack: () => void }) {
           setMatches(prev => {
             const newMatches = prev + 1;
             if (newMatches === memoryCards.length) {
-              // Play game complete sound
               setTimeout(() => gameSounds.levelUp(), 300);
               setIsComplete(true);
             }
@@ -206,7 +237,6 @@ function MemoryGame({ onBack }: { onBack: () => void }) {
           setFlippedCards([]);
         }, 500);
       } else {
-        // Play error sound for mismatch
         gameSounds.wrongMatch();
         setTimeout(() => {
           setCards(prev => prev.map(card =>
@@ -221,57 +251,65 @@ function MemoryGame({ onBack }: { onBack: () => void }) {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <Button variant="ghost" onClick={onBack}>
-          ← Back
+    <div className="space-y-8">
+      {/* Immersive Game Header */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 glass-card border-white/20 rounded-[2rem]">
+        <Button variant="ghost" onClick={onBack} className="rounded-xl font-bold hover:bg-white/10 h-12 px-6">
+          ← Exit Session
         </Button>
-        <div className="flex items-center gap-4">
-          <Badge variant="secondary">
-            <Timer className="w-3 h-3 mr-1" />
-            Moves: {moves}
-          </Badge>
-          <Badge variant="secondary">
-            <Trophy className="w-3 h-3 mr-1" />
-            Matched: {matches}/{memoryCards.length}
-          </Badge>
+        <div className="flex items-center gap-6">
+          <div className="text-center px-6 border-r border-white/10">
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Moves</p>
+            <p className="text-2xl font-display font-bold text-primary">{moves}</p>
+          </div>
+          <div className="text-center px-6 border-r border-white/10">
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Matches</p>
+            <p className="text-2xl font-display font-bold text-primary">{matches} / {memoryCards.length}</p>
+          </div>
+          <div className="text-center px-6">
+             <Trophy className={cn("w-8 h-8 transition-colors", isComplete ? "text-yellow-500 fill-yellow-500" : "text-white/20")} />
+          </div>
         </div>
-        <Button variant="outline" size="sm" onClick={initializeGame}>
-          <RotateCcw className="w-4 h-4 mr-1" />
+        <Button variant="outline" className="rounded-xl border-white/10 hover:bg-white/10 h-12 px-6 font-bold" onClick={initializeGame}>
+          <RotateCcw className="w-4 h-4 mr-2" />
           Reset
         </Button>
       </div>
 
-      {isComplete && (
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="mb-6"
-        >
-          <Card className="p-6 text-center bg-gradient-to-br from-purple-500/10 to-indigo-500/10">
-            <Trophy className="w-12 h-12 mx-auto mb-3 text-yellow-500" />
-            <h3 className="text-xl font-bold mb-2">Congratulations!</h3>
-            <p className="text-muted-foreground">
-              You completed the game in {moves} moves!
-            </p>
-          </Card>
-        </motion.div>
-      )}
+      <AnimatePresence>
+        {isComplete && (
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+          >
+            <Card className="p-10 text-center glass-card border-primary/40 rounded-[3rem] bg-primary/5 shadow-2xl relative overflow-hidden">
+               <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.1),transparent_70%)]" />
+               <div className="relative z-10">
+                  <Trophy className="w-20 h-20 mx-auto mb-6 text-yellow-500 drop-shadow-[0_0_20px_rgba(234,179,8,0.4)]" />
+                  <h3 className="text-4xl font-display font-bold mb-4">Brilliant Focus!</h3>
+                  <p className="text-muted-foreground text-lg mb-8 max-w-md mx-auto">
+                    You found all matches in just {moves} moves. Your cognitive clarity is peaking.
+                  </p>
+                  <Button className="h-14 px-10 rounded-2xl font-bold bg-primary shadow-xl shadow-primary/20" onClick={initializeGame}>
+                     Play Again
+                  </Button>
+               </div>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Game Grid */}
-      <div className="grid grid-cols-4 gap-3 max-w-md mx-auto">
+      {/* Memory Grid - Refined Cards */}
+      <div className="grid grid-cols-4 gap-4 max-w-2xl mx-auto">
         {cards.map((card) => (
           <motion.div
             key={card.id}
             className={cn(
-              "aspect-square rounded-xl cursor-pointer transition-all transform-gpu",
-              card.matched && "opacity-50"
+              "aspect-square rounded-[1.5rem] cursor-pointer transition-all transform-gpu",
+              card.matched && "opacity-40"
             )}
-            whileHover={{ scale: card.matched ? 1 : 1.05 }}
+            whileHover={{ scale: card.matched || card.flipped ? 1 : 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => handleCardClick(card.id)}
             data-testid={`card-memory-${card.id}`}
@@ -279,28 +317,24 @@ function MemoryGame({ onBack }: { onBack: () => void }) {
             <motion.div
               className="w-full h-full relative"
               animate={{ rotateY: card.flipped || card.matched ? 180 : 0 }}
-              transition={{ duration: 0.3 }}
+              transition={{ type: "spring", stiffness: 260, damping: 20 }}
               style={{ transformStyle: "preserve-3d" }}
             >
-              {/* Card Back */}
+              {/* Card Back - Modern Glass */}
               <div
-                className="absolute inset-0 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center backface-hidden"
+                className="absolute inset-0 rounded-[1.5rem] glass-card border-white/20 bg-gradient-to-br from-primary/40 to-indigo-600/40 flex items-center justify-center backface-hidden shadow-lg"
                 style={{ backfaceVisibility: "hidden" }}
               >
-                <motion.div
-                  className="w-8 h-8 rounded-full overflow-hidden"
-                  animate={{
-                    scale: [1, 1.15, 1],
-                    opacity: [0.5, 1, 0.5],
-                  }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                >
-                  <img src="/Quantum Shift.jpg" alt="Card" className="w-full h-full object-cover" />
-                </motion.div>
+                <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
+                   <div className="w-10 h-10 rounded-full overflow-hidden shadow-inner ring-2 ring-white/20">
+                      <img src="/Quantum Shift.jpg" alt="" className="w-full h-full object-cover" />
+                   </div>
+                </div>
               </div>
-              {/* Card Front */}
+              
+              {/* Card Front - Clean & Symbolic */}
               <div
-                className="absolute inset-0 rounded-xl bg-card border border-border flex items-center justify-center text-3xl backface-hidden"
+                className="absolute inset-0 rounded-[1.5rem] bg-white dark:bg-slate-900 border-2 border-primary/30 flex items-center justify-center text-5xl backface-hidden shadow-2xl"
                 style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
               >
                 {card.emoji}
@@ -309,7 +343,7 @@ function MemoryGame({ onBack }: { onBack: () => void }) {
           </motion.div>
         ))}
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -326,11 +360,11 @@ function BubbleGame({ onBack }: { onBack: () => void }) {
             id: Date.now(),
             x: Math.random() * 90 + 5,
             y: 100 + Math.random() * 20,
-            size: 30 + Math.random() * 30,
+            size: 50 + Math.random() * 40,
             popped: false,
           });
         }
-        return newBubbles.map(b => ({ ...b, y: b.y - 0.5 }));
+        return newBubbles.map(b => ({ ...b, y: b.y - 0.4 }));
       });
     }, 50);
 
@@ -342,45 +376,56 @@ function BubbleGame({ onBack }: { onBack: () => void }) {
       b.id === id ? { ...b, popped: true } : b
     ));
     setScore(prev => prev + 1);
+    soundManager.playClick();
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-    >
-      <div className="flex items-center justify-between mb-6">
-        <Button variant="ghost" onClick={onBack}>
-          ← Back
+    <div className="space-y-8">
+      <div className="flex items-center justify-between p-6 glass-card border-white/20 rounded-[2rem]">
+        <Button variant="ghost" onClick={onBack} className="rounded-xl font-bold h-12 px-6">
+          ← Back to Games
         </Button>
-        <Badge variant="secondary" className="text-lg px-4 py-2">
-          Score: {score}
-        </Badge>
+        <div className="flex items-center gap-4 bg-primary/10 rounded-2xl px-8 py-3 border border-primary/20">
+           <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Bubbles Popped</span>
+           <span className="text-2xl font-display font-bold text-primary">{score}</span>
+        </div>
       </div>
 
-      <Card className="relative h-[400px] overflow-hidden bg-gradient-to-b from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30">
-        {bubbles.filter(b => !b.popped).map((bubble) => (
-          <motion.button
-            key={bubble.id}
-            className="absolute rounded-full bg-gradient-to-br from-blue-400/60 to-cyan-400/60 backdrop-blur-sm border-2 border-white/30"
-            style={{
-              left: `${bubble.x}%`,
-              top: `${bubble.y}%`,
-              width: bubble.size,
-              height: bubble.size,
-            }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.8 }}
-            onClick={() => popBubble(bubble.id)}
-            data-testid={`bubble-${bubble.id}`}
-          />
-        ))}
+      <Card className="relative h-[600px] overflow-hidden rounded-[3rem] glass-card border-white/10 shadow-2xl">
+         <div className="absolute inset-0 bg-gradient-to-b from-blue-500/10 via-cyan-500/5 to-indigo-500/10 pointer-events-none" />
+         
+         <AnimatePresence>
+            {bubbles.filter(b => !b.popped).map((bubble) => (
+              <motion.button
+                key={bubble.id}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 2, opacity: 0 }}
+                className="absolute rounded-full glass-card border-2 border-white/40 shadow-[0_0_30px_rgba(103,232,249,0.2)] group"
+                style={{
+                  left: `${bubble.x}%`,
+                  top: `${bubble.y}%`,
+                  width: bubble.size,
+                  height: bubble.size,
+                }}
+                whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.2)" }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => popBubble(bubble.id)}
+              >
+                 <div className="absolute top-1/4 left-1/4 w-1/4 h-1/4 rounded-full bg-white/40" />
+              </motion.button>
+            ))}
+         </AnimatePresence>
 
-        <div className="absolute bottom-4 left-0 right-0 text-center text-muted-foreground text-sm">
-          Tap the bubbles to pop them!
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-20">
+           <h2 className="text-8xl font-display font-bold uppercase tracking-widest select-none">POLLEN</h2>
+        </div>
+
+        <div className="absolute bottom-10 left-0 right-0 text-center z-10">
+           <p className="text-sm font-bold uppercase tracking-[0.3em] text-muted-foreground/60">Tap to release the energy</p>
         </div>
       </Card>
-    </motion.div>
+    </div>
   );
 }
 
@@ -396,66 +441,71 @@ function ColorFlowGame({ onBack }: { onBack: () => void }) {
   ];
 
   const addColor = (gradient: string) => {
-    setColors(prev => [...prev.slice(-19), gradient]);
+    setColors(prev => [...prev.slice(-23), gradient]);
+    soundManager.playClick();
   };
 
   const clearColors = () => {
     setColors([]);
+    soundManager.playClick();
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-    >
-      <div className="flex items-center justify-between mb-6">
-        <Button variant="ghost" onClick={onBack}>
+    <div className="space-y-8">
+      <div className="flex items-center justify-between p-6 glass-card border-white/20 rounded-[2rem]">
+        <Button variant="ghost" onClick={onBack} className="rounded-xl font-bold h-12 px-6">
           ← Back
         </Button>
-        <Button variant="outline" size="sm" onClick={clearColors}>
-          <RotateCcw className="w-4 h-4 mr-1" />
-          Clear
+        <Button variant="outline" className="rounded-xl border-white/10 hover:bg-rose-500/10 hover:text-rose-500 h-12 px-6 font-bold" onClick={clearColors}>
+          <RotateCcw className="w-4 h-4 mr-2" />
+          Clear Canvas
         </Button>
       </div>
 
-      {/* Canvas */}
-      <Card className="h-[300px] mb-6 overflow-hidden relative">
-        <div className="absolute inset-0 flex flex-wrap gap-1 p-2 overflow-hidden">
-          {colors.map((color, i) => (
-            <motion.div
-              key={i}
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className={cn(
-                "w-12 h-12 rounded-lg bg-gradient-to-br",
-                color
-              )}
-            />
-          ))}
+      <Card className="h-[500px] rounded-[3rem] glass-card border-white/10 p-8 shadow-2xl relative overflow-hidden">
+        <div className="absolute inset-0 flex flex-wrap content-start gap-4 p-8 overflow-hidden z-10">
+          <AnimatePresence>
+            {colors.map((color, i) => (
+              <motion.div
+                key={i}
+                initial={{ scale: 0, rotate: -45, opacity: 0 }}
+                animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                className={cn(
+                  "w-20 h-20 rounded-3xl bg-gradient-to-br shadow-xl",
+                  color
+                )}
+              />
+            ))}
+          </AnimatePresence>
         </div>
+        
         {colors.length === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
-            Tap colors below to create a pattern
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
+             <div className="w-20 h-20 rounded-full bg-primary/5 flex items-center justify-center mb-6 border border-primary/10">
+                <Palette className="w-10 h-10 text-primary/40" />
+             </div>
+             <h3 className="text-2xl font-display font-bold mb-2">Infinite Palette</h3>
+             <p className="text-muted-foreground max-w-xs">Select colors below to begin your mindful composition.</p>
           </div>
         )}
       </Card>
 
-      {/* Color Palette */}
-      <div className="flex justify-center gap-3 flex-wrap">
+      <div className="p-10 glass-card border-white/10 rounded-[3rem] flex flex-wrap justify-center gap-6">
         {gradients.map((gradient, i) => (
           <motion.button
             key={i}
             className={cn(
-              "w-14 h-14 rounded-xl bg-gradient-to-br shadow-lg",
+              "w-20 h-20 rounded-3xl bg-gradient-to-br shadow-2xl relative group overflow-hidden",
               gradient
             )}
-            whileHover={{ scale: 1.1 }}
+            whileHover={{ scale: 1.15, y: -10 }}
             whileTap={{ scale: 0.9 }}
             onClick={() => addColor(gradient)}
-            data-testid={`color-${i}`}
-          />
+          >
+             <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </motion.button>
         ))}
       </div>
-    </motion.div>
+    </div>
   );
 }

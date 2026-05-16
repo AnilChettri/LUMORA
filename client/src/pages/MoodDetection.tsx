@@ -101,7 +101,6 @@ export default function MoodDetection() {
         title: "Mood saved!",
         description: "Your mood has been recorded.",
       });
-      // Navigation is controlled by the mood intervention plan.
     },
     onError: () => {
       toast({
@@ -123,8 +122,6 @@ export default function MoodDetection() {
       }
       setCameraEnabled(true);
       setPhase("scanning");
-
-      // Start mock scanning animation
       runMockScan();
     } catch (error) {
       toast({
@@ -152,7 +149,6 @@ export default function MoodDetection() {
           clearInterval(interval);
           setPhase("analyzing");
 
-          // Use real emotion detection from video frame
           if (videoRef.current) {
             detectEmotionFromFrame(videoRef.current).then(({ mood, confidence }) => {
               setDetectedMood(mood);
@@ -160,18 +156,15 @@ export default function MoodDetection() {
               setPhase("result");
             });
           } else {
-            // Fallback if video not available
             setTimeout(() => {
               const moods: MoodType[] = ["happy", "neutral", "anxious", "tired", "stressed"];
               const randomMood = moods[Math.floor(Math.random() * moods.length)];
               const randomConfidence = 70 + Math.floor(Math.random() * 25);
-
               setDetectedMood(randomMood);
               setConfidence(randomConfidence);
               setPhase("result");
             }, 1500);
           }
-
           return 100;
         }
         return prev + 2;
@@ -189,9 +182,7 @@ export default function MoodDetection() {
 
   const handleConfirm = () => {
     if (detectedMood) {
-      // Trigger the immediate mood → action plan
       runImmediateMoodPlan(detectedMood, setLocation);
-      // Persist mood in the background
       saveMoodMutation.mutate(detectedMood);
     }
   };
@@ -205,7 +196,7 @@ export default function MoodDetection() {
   useEffect(() => {
     return () => {
       stopCamera();
-      disposeEmotionModel(); // Cleanup TensorFlow resources
+      disposeEmotionModel();
     };
   }, [stopCamera]);
 
@@ -213,54 +204,76 @@ export default function MoodDetection() {
     <Screen>
       <Header />
       <ScreenBody>
-        <div className="max-w-3xl mx-auto w-full">
-          <ScreenHeader
-            eyebrow="Check-in"
-            title="How are you feeling?"
-            subtitle="Lumi will guide you into a short practice based on your mood."
-          />
+        <motion.div 
+          className="max-w-4xl mx-auto w-full px-4 py-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          <div className="text-center mb-12">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest mb-4"
+            >
+              <Brain className="w-4 h-4" />
+              Emotional Intelligence
+            </motion.div>
+            <h1 className="text-4xl md:text-5xl font-display font-bold tracking-tight mb-4">
+              How's your <span className="gradient-text">spirit</span> today?
+            </h1>
+            <p className="text-muted-foreground text-lg max-w-xl mx-auto">
+              Lumi uses neural analysis to understand your mood and tailor your experience.
+            </p>
+          </div>
 
           <AnimatePresence mode="wait">
             {/* Consent Phase */}
             {phase === "consent" && (
               <motion.section
                 key="consent"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                className="flex flex-col justify-between flex-1 gap-8"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95, filter: "blur(10px)" }}
+                className="grid md:grid-cols-2 gap-8 items-stretch"
               >
-                <div className="flex flex-col items-center text-center gap-4 mt-4">
-                  <div className="w-24 h-24 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+                <div className="super-glass rounded-[3rem] p-10 flex flex-col items-center text-center gap-6">
+                  <div className="w-24 h-24 rounded-[2rem] bg-primary/10 flex items-center justify-center neural-pulse">
                     <Camera className="w-10 h-10 text-primary" />
                   </div>
-                  <div className="space-y-2">
-                    <h2 className="text-xl font-semibold">Use your camera for a quick read?</h2>
-                    <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                      Lumi can use your facial expressions to guess your mood. No images are stored and you can always choose manually.
+                  <div className="space-y-4">
+                    <h2 className="text-2xl font-bold font-display">Neural Scan</h2>
+                    <p className="text-muted-foreground leading-relaxed">
+                      Lumi analyzes facial micro-expressions for a precise emotional read.
                     </p>
                   </div>
-                </div>
-
-                <div className="space-y-3 mb-2">
                   <Button
-                    className="w-full rounded-2xl py-5 text-base font-semibold"
-                    size="lg"
+                    className="w-full h-14 rounded-2xl text-lg font-bold bg-primary shadow-lg shadow-primary/20 hover:scale-105 transition-all mt-auto"
                     onClick={startCamera}
                     data-testid="button-enable-camera"
                   >
-                    <Video className="w-5 h-5 mr-2" />
-                    Use camera for a quick scan
+                    <Video className="w-6 h-6 mr-3" />
+                    Start Scan
                   </Button>
+                </div>
+
+                <div className="super-glass rounded-[3rem] p-10 flex flex-col items-center text-center gap-6">
+                  <div className="w-24 h-24 rounded-[2rem] bg-accent/10 flex items-center justify-center">
+                    <Sparkles className="w-10 h-10 text-accent" />
+                  </div>
+                  <div className="space-y-4">
+                    <h2 className="text-2xl font-bold font-display">Manual Check-in</h2>
+                    <p className="text-muted-foreground leading-relaxed">
+                      Prefer to tell Lumi yourself? Select your current state manually.
+                    </p>
+                  </div>
                   <Button
-                    variant="ghost"
-                    className="w-full rounded-2xl py-4 text-sm text-muted-foreground border border-border/60"
-                    size="lg"
+                    variant="outline"
+                    className="w-full h-14 rounded-2xl text-lg font-bold border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all mt-auto"
                     onClick={() => setPhase("result")}
                     data-testid="button-manual-mood"
                   >
-                    <VideoOff className="w-5 h-5 mr-2" />
-                    I’ll choose my mood myself
+                    Choose Manually
                   </Button>
                 </div>
               </motion.section>
@@ -270,227 +283,174 @@ export default function MoodDetection() {
             {phase === "scanning" && (
               <motion.section
                 key="scanning"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex flex-col flex-1 gap-4"
+                className="max-w-2xl mx-auto w-full"
               >
-                <div className="relative aspect-[4/3] bg-black rounded-3xl overflow-hidden shadow-lg">
+                <div className="relative aspect-video bg-black rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white/10">
                   <video
                     ref={videoRef}
                     autoPlay
                     playsInline
                     muted
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover grayscale opacity-60"
                   />
 
-                  {/* Scanning overlay */}
+                  {/* High-tech scanning overlay */}
                   <div className="absolute inset-0 pointer-events-none">
-                    {/* Scan line */}
-                    <motion.div
-                      className="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent"
-                      animate={{ top: ["0%", "100%", "0%"] }}
-                      transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                    />
-
-                    {/* Corner brackets */}
-                    <div className="absolute inset-4">
-                      <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-primary rounded-tl-lg" />
-                      <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-primary rounded-tr-lg" />
-                      <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-primary rounded-bl-lg" />
-                      <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-primary rounded-br-lg" />
+                    <div className="absolute inset-0 bg-primary/10 animate-pulse" />
+                    <div className="absolute top-0 left-0 right-0 h-[2px] bg-primary/60 shadow-[0_0_20px_hsl(var(--primary))] scan-line" />
+                    
+                    <div className="absolute inset-10 border-2 border-primary/20 rounded-[2rem] flex items-center justify-center">
+                      <div className="w-40 h-40 border-2 border-primary/40 rounded-full flex items-center justify-center">
+                        <div className="w-20 h-20 border border-primary/60 rounded-full animate-ping" />
+                      </div>
                     </div>
 
-                    {/* Brain visualization overlay */}
-                    <div className="absolute top-4 right-4">
-                      <BrainVisualization mood="neutral" isScanning size="sm" />
+                    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 super-glass px-6 py-2 rounded-full border-primary/30">
+                      <span className="text-xs font-bold uppercase tracking-widest text-primary animate-pulse">Neural Mapping In Progress</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-3 mt-4">
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Analyzing expressions…</span>
+                <div className="mt-8 space-y-4">
+                  <div className="flex items-center justify-between font-bold text-sm">
+                    <span className="text-primary uppercase tracking-tighter">Scanning...</span>
                     <span className="font-mono">{scanProgress}%</span>
                   </div>
-                  <Progress value={scanProgress} className="h-2" />
+                  <div className="h-3 rounded-full bg-primary/10 overflow-hidden">
+                    <motion.div 
+                      className="h-full bg-primary shadow-[0_0_15px_hsl(var(--primary))]"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${scanProgress}%` }}
+                    />
+                  </div>
                 </div>
               </motion.section>
-            )}
-
-            {/* Analyzing Phase */}
-            {phase === "analyzing" && (
-              <motion.div
-                key="analyzing"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-center py-12"
-              >
-                <BrainVisualization mood="neutral" isScanning size="lg" className="mx-auto mb-6" />
-                <h2 className="text-xl font-semibold mb-2">Analyzing Your Mood</h2>
-                <p className="text-muted-foreground">
-                  Lumi is processing your emotional state...
-                </p>
-              </motion.div>
             )}
 
             {/* Result Phase */}
             {phase === "result" && (
               <motion.section
                 key="result"
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="flex flex-col flex-1 gap-5"
+                className="space-y-8"
               >
                 {detectedMood ? (
-                  <>
-                    <div className="flex flex-col gap-5">
-                      <div className="text-center">
-                        <BrainVisualization mood={detectedMood} size="md" className="mx-auto mb-4" />
-                        <h2 className="text-2xl font-bold mb-1">
-                          {moodDetails[detectedMood].label}
-                        </h2>
-                        <p className="text-muted-foreground">
-                          {moodDetails[detectedMood].description}
-                        </p>
-                        {confidence > 0 && (
-                          <Badge variant="secondary" className="mt-2">
-                            {confidence}% confidence
-                          </Badge>
-                        )}
-                      </div>
-
-                      {/* Lumi summary: what happens if I tap Confirm? */}
-                      <div className="rounded-2xl bg-background/70 border border-border/60 px-4 py-4">
-                        <div className="flex items-start gap-3">
-                          <LumiCharacter size="sm" mood="calm" animate={false} />
+                  <div className="grid lg:grid-cols-12 gap-8">
+                    {/* Mood Profile - 5 cols */}
+                    <div className="lg:col-span-5">
+                      <div className="super-glass rounded-[3rem] p-10 h-full flex flex-col items-center text-center gap-6 overflow-hidden relative group">
+                        <div className={cn("absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity", moodDetails[detectedMood].color)} />
+                        
+                        <div className="relative z-10 space-y-6">
+                          <BrainVisualization mood={detectedMood} size="lg" className="mx-auto" />
                           <div className="space-y-2">
-                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                              Lumi's next step
+                            <h2 className="text-5xl font-display font-bold tracking-tighter">
+                              {moodDetails[detectedMood].label}
+                            </h2>
+                            <p className="text-xl text-muted-foreground">
+                              {moodDetails[detectedMood].description}
                             </p>
-                            {(() => {
-                              const preview = getPlanPreviewForMood(detectedMood);
-                              return (
-                                <>
-                                  <p className="text-sm font-medium">
-                                    {preview.title}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {preview.subtitle}
-                                  </p>
-                                  <div className="mt-2 flex flex-wrap gap-2">
-                                    {preview.chips.map((chip) => (
-                                      <span
-                                        key={chip}
-                                        className="rounded-full bg-muted px-2 py-1 text-[11px] text-muted-foreground"
-                                      >
-                                        {chip}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </>
-                              );
-                            })()}
+                            {confidence > 0 && (
+                              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold">
+                                <Zap className="w-3 h-3" />
+                                {confidence}% Accurate
+                              </div>
+                            )}
                           </div>
                         </div>
-                      </div>
 
-                      <div className="rounded-2xl bg-background/60 px-4 py-4">
-                        <div className="flex items-start gap-3">
-                          <LumiCharacter size="sm" mood="calm" animate={false} />
-                          <p className="text-sm">{moodDetails[detectedMood].suggestion}</p>
+                        <div className="relative z-10 w-full mt-auto pt-8 border-t border-primary/5 flex gap-4">
+                          <Button
+                            variant="ghost"
+                            className="flex-1 h-12 rounded-xl font-bold opacity-60 hover:opacity-100"
+                            onClick={handleRetry}
+                          >
+                            <RefreshCw className="w-4 h-4 mr-2" />
+                            Retry
+                          </Button>
+                          <Button
+                            className="flex-1 h-12 rounded-xl font-bold bg-primary shadow-lg shadow-primary/20"
+                            onClick={handleConfirm}
+                            disabled={saveMoodMutation.isPending}
+                          >
+                            Confirm
+                          </Button>
                         </div>
-                      </div>
-
-                      <div className="flex gap-3 pt-1">
-                        <Button
-                          variant="outline"
-                          className="flex-1"
-                          onClick={handleRetry}
-                          data-testid="button-retry-mood"
-                        >
-                          <RefreshCw className="w-4 h-4 mr-2" />
-                          Try Again
-                        </Button>
-                        <Button
-                          className="flex-1"
-                          onClick={handleConfirm}
-                          disabled={saveMoodMutation.isPending}
-                          data-testid="button-confirm-mood"
-                        >
-                          {saveMoodMutation.isPending ? (
-                            <LoadingSpinner size="sm" variant="dots" />
-                          ) : (
-                            <>
-                              <Check className="w-4 h-4 mr-2" />
-                              Confirm
-                            </>
-                          )}
-                        </Button>
                       </div>
                     </div>
 
-                    {/* Recommended activities */}
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3 }}
-                      className="space-y-3"
-                    >
-                      <p className="text-sm font-medium text-muted-foreground px-1">Suggested activities for you</p>
-                      <div className="grid gap-3">
-                        {getMoodRecommendations(detectedMood).map((rec, idx) => (
+                    {/* Next Steps - 7 cols */}
+                    <div className="lg:col-span-7 space-y-6">
+                      <div className="super-glass rounded-[2.5rem] p-8 space-y-6 border-white/30">
+                        <div className="flex items-center gap-4">
+                          <LumiCharacter size="sm" mood="listening" />
+                          <div>
+                            <h3 className="font-bold text-lg font-display">Lumi's Plan</h3>
+                            <p className="text-sm text-muted-foreground">Designed for your current state</p>
+                          </div>
+                        </div>
+
+                        {(() => {
+                          const preview = getPlanPreviewForMood(detectedMood);
+                          return (
+                            <div className="space-y-4">
+                              <div className="bg-primary/5 rounded-[2rem] p-6 border border-primary/10">
+                                <h4 className="text-2xl font-bold font-display mb-2">{preview.title}</h4>
+                                <p className="text-muted-foreground leading-relaxed">{preview.subtitle}</p>
+                                <div className="mt-4 flex flex-wrap gap-2">
+                                  {preview.chips.map((chip) => (
+                                    <span key={chip} className="px-4 py-1.5 rounded-full bg-white/50 dark:bg-black/50 backdrop-blur-md text-xs font-bold border border-white/20">
+                                      {chip}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+
+                      <div className="grid sm:grid-cols-2 gap-4">
+                        {getMoodRecommendations(detectedMood).slice(0, 2).map((rec, idx) => (
                           <motion.button
                             key={idx}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.4 + idx * 0.1 }}
+                            whileHover={{ y: -5, scale: 1.02 }}
                             onClick={() => setLocation(rec.path)}
                             className={cn(
-                              "p-4 rounded-lg border text-left transition-all hover:shadow-md",
-                              "flex items-center gap-3 group",
+                              "p-6 rounded-[2rem] border-2 text-left transition-all group super-glass border-white/10 hover:border-primary/30",
                               rec.color
                             )}
-                            data-testid={`rec-activity-${rec.label}`}
                           >
-                            <div className="text-2xl">{rec.icon}</div>
-                            <div className="flex-1">
-                              <div className="font-semibold group-hover:text-primary transition-colors">{rec.label}</div>
-                            </div>
-                            <div className="text-muted-foreground group-hover:translate-x-1 transition-transform">→</div>
+                            <div className="text-3xl mb-4 group-hover:scale-125 transition-transform duration-500">{rec.icon}</div>
+                            <h4 className="font-bold text-lg leading-tight group-hover:text-primary transition-colors">{rec.label}</h4>
                           </motion.button>
                         ))}
                       </div>
-                    </motion.div>
-                  </>
+                    </div>
+                  </div>
                 ) : (
-                  <section className="flex flex-col flex-1 gap-4">
-                    <h2 className="text-xl font-semibold text-center">
-                      Choose your mood
-                    </h2>
-                    <p className="text-xs text-muted-foreground text-center mb-1">
-                      This helps Lumi pick the right next step.
-                    </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <section className="super-glass rounded-[3rem] p-10 max-w-3xl mx-auto w-full">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                       {allMoods.map((mood) => (
                         <motion.button
                           key={mood}
-                          whileHover={{ scale: 1.03 }}
-                          whileTap={{ scale: 0.97 }}
+                          whileHover={{ y: -5, scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                           onClick={() => handleManualMoodSelect(mood)}
                           className={cn(
-                            "p-4 rounded-xl border-2 transition-all text-left",
+                            "aspect-square p-6 rounded-[2.5rem] border-2 transition-all flex flex-col items-center justify-center text-center gap-3",
                             moodDetails[mood].color,
-                            "hover:shadow-md"
+                            "hover:shadow-2xl hover:border-primary/40 shadow-lg border-white/10"
                           )}
                           data-testid={`button-mood-${mood}`}
                         >
-                          <div className="font-semibold">{moodDetails[mood].label}</div>
-                          <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                            {moodDetails[mood].description}
-                          </div>
+                          <BrainVisualization mood={mood} size="sm" />
+                          <div className="font-bold text-lg tracking-tight leading-tight">{moodDetails[mood].label}</div>
                         </motion.button>
                       ))}
                     </div>
@@ -505,28 +465,32 @@ export default function MoodDetection() {
                 key="confirmed"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="text-center py-12"
+                className="super-glass rounded-[3rem] p-20 text-center max-w-2xl mx-auto"
               >
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: "spring", stiffness: 500 }}
-                  className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center"
+                  className="w-24 h-24 mx-auto mb-8 rounded-full bg-green-500/10 flex items-center justify-center"
                 >
-                  <Check className="w-10 h-10 text-green-600" />
+                  <Check className="w-12 h-12 text-green-500" />
                 </motion.div>
-                <h2 className="text-2xl font-bold mb-2">All Set!</h2>
-                <p className="text-muted-foreground mb-6">
-                  Your mood has been recorded. Let's make today count!
+                <h2 className="text-4xl font-bold font-display mb-4">All Set!</h2>
+                <p className="text-xl text-muted-foreground mb-10">
+                  Lumi is now tuned to your rhythm.
                 </p>
-                <Button onClick={() => setLocation("/")} data-testid="button-go-dashboard">
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Go to Dashboard
+                <Button 
+                  size="lg"
+                  onClick={() => setLocation("/")}
+                  className="h-14 px-10 rounded-2xl font-bold bg-primary shadow-xl shadow-primary/20 hover:scale-105 transition-transform"
+                >
+                  <Sparkles className="w-5 h-5 mr-3" />
+                  Enter Dashboard
                 </Button>
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </motion.div>
       </ScreenBody>
     </Screen>
   );

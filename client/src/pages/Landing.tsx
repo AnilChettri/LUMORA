@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { LumiCharacter } from "@/components/animations/LumiCharacter";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { 
@@ -14,7 +15,8 @@ import {
   Sparkles,
   Zap,
   Target,
-  Lightbulb
+  Lightbulb,
+  ArrowRight,
 } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
@@ -72,189 +74,190 @@ const itemVariants = {
 export default function Landing() {
   const { loginAsGuest } = useAuth();
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950 relative overflow-hidden">
-      {/* Subtle gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-purple-900/20 via-transparent to-slate-900/20 pointer-events-none" />
+    <div className="min-h-screen relative overflow-x-hidden">
+      {/* Global Background Elements */}
+      <div className="fixed inset-0 -z-30 pointer-events-none">
+         <div className="absolute inset-0 bg-slate-950" />
+         <div className="absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,rgba(139,92,246,0.15),transparent_50%)]" />
+         <div className="absolute inset-0 bg-[radial_gradient(circle_at_100%_100%,rgba(236,72,153,0.1),transparent_50%)]" />
+      </div>
 
-      {/* Header */}
-      <header className="relative z-20 flex items-center justify-between px-6 py-5 border-b border-purple-500/20 bg-gradient-to-b from-purple-950/40 to-transparent backdrop-blur-sm">
-        <motion.div 
-          className="flex items-center gap-3"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <div className="w-11 h-11 rounded-full overflow-hidden shadow-lg shadow-purple-500/40 ring-2 ring-purple-400/20 hover:ring-purple-400/40 transition-all">
-            <img 
-              src="/Quantum Shift.jpg" 
-              alt="Lumi" 
-              className="w-full h-full object-cover"
-            />
+      {/* Header - Floating Island Style */}
+      <header className="fixed top-6 left-0 right-0 z-50 px-6">
+        <div className="max-w-6xl mx-auto flex items-center justify-between p-2 pl-6 rounded-[2rem] bg-white/5 border border-white/10 backdrop-blur-2xl shadow-2xl">
+          <motion.div 
+            className="flex items-center gap-3"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
+            <div className="w-10 h-10 rounded-full overflow-hidden shadow-xl ring-2 ring-primary/20">
+              <img src="/Quantum Shift.jpg" alt="Lumi" className="w-full h-full object-cover" />
+            </div>
+            <span className="font-display font-bold text-xl tracking-tight">SoulSync</span>
+          </motion.div>
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <Button asChild className="bg-primary hover:bg-primary/90 text-white rounded-[1.25rem] px-8 font-bold h-12 shadow-lg shadow-primary/20">
+              <Link href="/login">Log in</Link>
+            </Button>
           </div>
-          <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-purple-100 via-violet-100 to-fuchsia-100 bg-clip-text text-transparent">Lumi</span>
-        </motion.div>
-        <div className="flex items-center gap-4">
-          <ThemeToggle />
-          <Button asChild className="bg-purple-500 hover:bg-purple-600 text-white rounded-lg px-6 font-semibold transition-all hover:shadow-lg hover:shadow-purple-500/30 active:scale-95" data-testid="button-login">
-            <Link href="/login">Log in</Link>
-          </Button>
         </div>
       </header>
 
-      {/* Hero Section - Minimal and Clean */}
-      <section className="relative z-10 px-6 py-12 md:py-16">
-        <div className="max-w-7xl mx-auto flex items-stretch gap-8 lg:gap-12">
-          {/* Left: Text Content */}
+      {/* Hero Section - Immersive Layout */}
+      <section className="relative pt-40 pb-20 px-6">
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
           <motion.div
-            className="flex flex-col items-center text-center lg:items-start lg:text-left flex-1 min-w-0 justify-center"
+            className="flex flex-col items-center text-center lg:items-start lg:text-left space-y-8"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
           >
             <motion.div
               variants={itemVariants}
-              className="flex items-center gap-2 mb-6 px-3 py-2 rounded-full border border-purple-400/30 bg-purple-950/40"
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/20 bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest"
             >
-              <div className="w-2 h-2 rounded-full bg-purple-400" />
-              <span className="text-sm text-purple-200">Your mental health companion</span>
+              <Sparkles className="w-3.5 h-3.5" />
+              Mental Health Reinvented
             </motion.div>
 
             <motion.h1 
               variants={itemVariants}
-              className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 text-balance leading-tight drop-shadow-lg"
+              className="text-6xl md:text-7xl xl:text-8xl font-display font-bold leading-[1.1] tracking-tight"
             >
-              <span className="bg-gradient-to-r from-purple-100 via-violet-100 to-fuchsia-100 bg-clip-text text-transparent">
-                Transform Your
-              </span>
-              <br />
-              <span className="bg-gradient-to-r from-purple-200 via-violet-200 to-fuchsia-200 bg-clip-text text-transparent">
-                Mental Wellbeing
-              </span>
+              Find Your <br />
+              <span className="gradient-text">Inner Balance</span>
             </motion.h1>
 
             <motion.p 
               variants={itemVariants}
-              className="text-lg md:text-xl text-purple-100/75 max-w-xl mb-10 leading-relaxed font-light"
+              className="text-xl text-muted-foreground max-w-xl leading-relaxed font-medium"
             >
-              Meet Lumi, your empathetic AI companion. Get support with 
-              <span className="text-purple-200 font-medium"> mood detection, guided exercises, and a supportive community</span>.
+              Experience the future of wellbeing with Lumi, your AI sanctuary. 
+              Real-time empathy, scientific grounding, and a community that cares.
             </motion.p>
 
-            {/* CTA Buttons - Simple */}
             <motion.div 
               variants={itemVariants}
-              className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mb-10"
+              className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto"
             >
               <Button 
                 size="lg" 
-                className="text-lg px-8 py-7 rounded-lg bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 text-white border-0 shadow-lg hover:shadow-xl hover:shadow-purple-500/50 transition-all active:scale-95 font-semibold"
+                className="h-16 px-10 rounded-[1.5rem] bg-primary text-white font-bold text-lg shadow-2xl shadow-primary/30 group"
                 asChild
-                data-testid="button-get-started"
               >
-                <Link href="/login" className="flex items-center gap-2">
-                  Get Started Free
+                <Link href="/login" className="flex items-center gap-3">
+                  Start Your Journey
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </Button>
 
               <Button 
                 variant="outline" 
                 size="lg" 
-                className="text-lg px-8 py-7 rounded-lg border-2 border-purple-400/50 text-purple-100 hover:border-purple-400/80 hover:bg-purple-500/15 transition-all font-semibold"
+                className="h-16 px-10 rounded-[1.5rem] border-white/10 bg-white/5 hover:bg-white/10 text-foreground font-bold text-lg"
                 onClick={() => loginAsGuest()}
-                data-testid="button-try-as-guest"
               >
                 Try as Guest
               </Button>
             </motion.div>
 
-            {/* Trust Indicators - Static */}
+            {/* Trust Badges */}
             <motion.div 
               variants={itemVariants}
-              className="flex flex-wrap items-center justify-center lg:justify-start gap-6"
+              className="pt-8 flex flex-wrap justify-center lg:justify-start gap-8"
             >
               {[
-                { icon: Shield, label: "Private & Secure" },
-                { icon: Heart, label: "Clinically Informed" },
-                { icon: Users, label: "Community Driven" },
+                { icon: Shield, label: "End-to-End Private" },
+                { icon: Zap, label: "Real-time AI Empathy" },
+                { icon: Target, label: "Goal Oriented" },
               ].map((item, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <div className="p-2 rounded-lg bg-purple-500/20">
-                    <item.icon className="w-4 h-4 text-purple-300" />
+                <div key={i} className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10">
+                    <item.icon className="w-5 h-5 text-primary" />
                   </div>
-                  <span className="text-sm text-purple-200 font-medium">{item.label}</span>
+                  <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{item.label}</span>
                 </div>
               ))}
             </motion.div>
           </motion.div>
 
-          {/* Right: Meditation Background Image */}
+          {/* Hero Visual */}
           <motion.div
-            className="relative flex items-center justify-center flex-1 shrink-0"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7, delay: 0.2 }}
+            className="relative"
+            initial={{ opacity: 0, scale: 0.9, rotateY: 20 }}
+            animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+            transition={{ duration: 1.2, ease: "easeOut" }}
           >
-            {/* Meditation/Yoga background image with overlay */}
-            <div className="relative w-full h-96 rounded-3xl overflow-hidden shadow-2xl">
-              <img
-                src="/Fundo de ioga de meditação _ imagem Premium gerada com IA.jpg"
-                alt="Meditation and wellness"
-                className="w-full h-full object-cover"
-              />
-              
-              {/* Gradient overlay for visual hierarchy */}
-              <div className="absolute inset-0 bg-gradient-to-l from-purple-900/70 via-purple-900/50 to-transparent" />
-              
-              {/* Decorative circles */}
-              <div className="absolute top-8 right-8 w-24 h-24 rounded-full border-2 border-purple-400/40 animate-pulse" />
-              <div className="absolute bottom-16 left-8 w-20 h-20 rounded-full border border-violet-400/40" />
-              
-              {/* Floating stat card */}
-              <motion.div
-                className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex items-center gap-3 rounded-2xl bg-purple-950/95 px-5 py-3 shadow-lg border border-purple-500/40 backdrop-blur-md"
-                animate={{ y: [0, -6, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              >
-              </motion.div>
+            <div className="aspect-[4/5] rounded-[3.5rem] overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.4)] border border-white/10 relative group">
+               <img
+                 src="/Fundo de ioga de meditação _ imagem Premium gerada com IA.jpg"
+                 alt="Sanctuary"
+                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2s]"
+               />
+               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+               
+               {/* Floating Glass Widget */}
+               <motion.div
+                 className="absolute bottom-10 left-10 right-10 p-6 glass-card border-white/20 rounded-[2.5rem] shadow-2xl"
+                 animate={{ y: [0, -10, 0] }}
+                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+               >
+                  <div className="flex items-center gap-4">
+                     <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center border border-primary/20">
+                        <Heart className="w-6 h-6 text-primary fill-current" />
+                     </div>
+                     <div>
+                        <p className="text-sm font-bold uppercase tracking-widest opacity-60">Session Pulse</p>
+                        <p className="text-xl font-display font-bold">Resonant & Calm</p>
+                     </div>
+                     <div className="ml-auto flex gap-1">
+                        {[1,2,3,4].map(i => <div key={i} className={cn("w-1 h-4 bg-primary/40 rounded-full", i===2 && "h-8 bg-primary", i===3 && "h-6")} />)}
+                     </div>
+                  </div>
+               </motion.div>
             </div>
+            
+            {/* Ambient Background Glow */}
+            <div className="absolute -top-20 -right-20 w-64 h-64 bg-primary/20 blur-[100px] -z-10 animate-pulse" />
           </motion.div>
         </div>
       </section>
 
-
-      {/* Features Section - Clean Cards */}
-      <section id="features" className="relative z-10 px-6 py-20 bg-gradient-to-b from-transparent via-purple-950/20 to-transparent">
-        <div className="max-w-6xl mx-auto">
+      {/* Features - Grid Refinement */}
+      <section className="py-32 px-6 relative">
+        <div className="max-w-6xl mx-auto space-y-20">
           <motion.div
-            className="text-center mb-16"
+            className="text-center space-y-6"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
           >
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-purple-200 via-violet-200 to-fuchsia-200 bg-clip-text text-transparent">
-              Powerful Features for Your Wellness
+            <h2 className="text-4xl md:text-5xl font-display font-bold tracking-tight">
+               Built for Your <span className="gradient-text">Emotional Evolution</span>
             </h2>
-            <p className="text-lg text-purple-100/70 max-w-2xl mx-auto leading-relaxed">
-              Everything you need to understand, manage, and improve your mental health with personalized AI support
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+               A comprehensive suite of tools designed to meet you exactly where you are.
             </p>
           </motion.div>
 
           <motion.div
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
           >
-            {features.map((feature) => (
+            {features.map((feature, i) => (
               <motion.div key={feature.title} variants={itemVariants}>
-                <Card className="p-8 border-purple-500/20 bg-gradient-to-br from-purple-900/40 via-violet-900/20 to-purple-900/30 hover:border-purple-500/60 hover:bg-purple-900/50 hover:shadow-lg hover:shadow-purple-500/20 transition-all duration-300 h-full group cursor-pointer">
-                  <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-purple-500/40 to-violet-500/40 flex items-center justify-center mb-6 group-hover:from-purple-500/50 group-hover:to-violet-500/50 transition-all">
-                    <feature.icon className="w-7 h-7 text-purple-200 group-hover:text-purple-100 transition-colors" />
+                <Card className="p-10 glass-card border-white/10 hover:border-primary/40 hover:bg-primary/5 transition-all duration-500 rounded-[2.5rem] group h-full flex flex-col space-y-6">
+                  <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:scale-110 group-hover:bg-primary/10 group-hover:border-primary/20 transition-all duration-500">
+                    <feature.icon className="w-8 h-8 text-primary group-hover:text-primary transition-colors" />
                   </div>
-                  <h3 className="text-xl font-bold text-purple-100 mb-3">{feature.title}</h3>
-                  <p className="text-purple-200/70 text-sm leading-relaxed">{feature.description}</p>
+                  <div className="space-y-3">
+                     <h3 className="text-2xl font-display font-bold">{feature.title}</h3>
+                     <p className="text-muted-foreground leading-relaxed font-medium">{feature.description}</p>
+                  </div>
                 </Card>
               </motion.div>
             ))}
@@ -262,97 +265,86 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* CTA Section - Simple and Focused */}
-      <section className="relative z-10 px-6 py-20">
-        <div className="max-w-4xl mx-auto">
+      {/* CTA Section - Final Conversion */}
+      <section className="py-20 px-6">
+        <div className="max-w-5xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
           >
-            <Card className="p-14 text-center bg-gradient-to-br from-purple-900/40 via-violet-900/30 to-fuchsia-900/40 border-purple-400/40 shadow-xl">
-              <motion.div className="mb-6">
-                <LumiCharacter size="md" mood="calm" className="mx-auto" />
-              </motion.div>
+            <Card className="p-16 text-center super-glass border-primary/20 rounded-[4rem] shadow-3xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[100px] -z-10" />
+              
+              <div className="relative z-10 space-y-10">
+                <div className="w-24 h-24 mx-auto rounded-[2rem] bg-white/5 border border-white/10 flex items-center justify-center shadow-inner">
+                   <LumiCharacter size="lg" mood="calm" />
+                </div>
 
-              <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-purple-100 via-violet-100 to-fuchsia-100 bg-clip-text text-transparent">
-                Start Your Journey Today
-              </h2>
+                <div className="space-y-4">
+                  <h2 className="text-5xl md:text-6xl font-display font-bold tracking-tight">
+                    Your Peace is <span className="text-primary">Waiting.</span>
+                  </h2>
+                  <p className="text-xl text-muted-foreground max-w-xl mx-auto leading-relaxed">
+                    Join the community of seekers finding balance every day with SoulSync.
+                  </p>
+                </div>
 
-              <p className="text-lg text-purple-100/80 mb-8 max-w-2xl mx-auto">
-                Join thousands of users experiencing real transformation with Lumi's 
-                AI-powered mental health support. Your wellness journey starts here.
-              </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button 
+                    size="lg" 
+                    className="h-16 px-12 rounded-2xl bg-primary text-white font-bold text-lg shadow-2xl shadow-primary/30"
+                    asChild
+                  >
+                    <Link href="/login">Initialize Journey</Link>
+                  </Button>
 
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button 
-                  size="lg" 
-                  className="text-lg px-10 py-6 rounded-lg bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 text-white border-0 shadow-lg"
-                  asChild
-                >
-                  <Link href="/login">Start Free Trial</Link>
-                </Button>
-
-                <Button 
-                  variant="outline" 
-                  size="lg" 
-                  className="text-lg px-10 py-6 rounded-lg border-purple-400/40 text-purple-100 hover:border-purple-400/80 hover:bg-purple-500/10"
-                >
-                  View Pricing
-                </Button>
+                  <Button 
+                    variant="outline" 
+                    size="lg" 
+                    className="h-16 px-12 rounded-2xl border-white/10 bg-white/5 hover:bg-white/10 text-foreground font-bold text-lg"
+                  >
+                    View Experience
+                  </Button>
+                </div>
               </div>
             </Card>
           </motion.div>
         </div>
       </section>
 
-      {/* Footer - Minimal */}
-      <footer className="relative z-20 px-6 py-14 border-t border-purple-500/20 bg-gradient-to-b from-transparent via-purple-950/30 to-purple-950/50">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-7 h-7 rounded-full overflow-hidden ring-2 ring-purple-400/30">
+      {/* Footer - Elegant & Minimal */}
+      <footer className="py-20 px-6 border-t border-white/5">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-16">
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+               <div className="w-10 h-10 rounded-full overflow-hidden shadow-xl ring-2 ring-primary/20">
                   <img src="/Quantum Shift.jpg" alt="Lumi" className="w-full h-full object-cover" />
-                </div>
-                <span className="font-bold text-lg text-purple-100">Lumi</span>
-              </div>
-              <p className="text-purple-200/60 text-sm leading-relaxed">Your AI mental health companion</p>
+               </div>
+               <span className="font-display font-bold text-xl tracking-tight">SoulSync</span>
             </div>
-
-            <div>
-              <h4 className="font-semibold text-purple-100 mb-4 text-sm uppercase tracking-wide">Product</h4>
-              <ul className="space-y-3 text-purple-200/60 text-sm">
-                <li><a href="#features" className="hover:text-purple-200 transition duration-200">Features</a></li>
-                <li><a href="#" className="hover:text-purple-200 transition duration-200">Pricing</a></li>
-                <li><a href="#" className="hover:text-purple-200 transition duration-200">Security</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-semibold text-purple-100 mb-4 text-sm uppercase tracking-wide">Company</h4>
-              <ul className="space-y-3 text-purple-200/60 text-sm">
-                <li><a href="#" className="hover:text-purple-200 transition duration-200">About</a></li>
-                <li><a href="#" className="hover:text-purple-200 transition duration-200">Blog</a></li>
-                <li><a href="#" className="hover:text-purple-200 transition duration-200">Contact</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-semibold text-purple-100 mb-4 text-sm uppercase tracking-wide">Legal</h4>
-              <ul className="space-y-3 text-purple-200/60 text-sm">
-                <li><a href="#" className="hover:text-purple-200 transition duration-200">Privacy</a></li>
-                <li><a href="#" className="hover:text-purple-200 transition duration-200">Terms</a></li>
-                <li><a href="#" className="hover:text-purple-200 transition duration-200">Cookies</a></li>
-              </ul>
-            </div>
+            <p className="text-muted-foreground leading-relaxed font-medium">Elevating human consciousness through empathetic technology.</p>
           </div>
 
-          <div className="pt-10 border-t border-purple-500/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-purple-200/60">
-            <p>&copy; 2025 Lumi. All rights reserved.</p>
-            <p>Made with care for your wellbeing 💜</p>
-          </div>
+          {[
+             { title: "Platform", links: ["Features", "Neuroscience", "Security"] },
+             { title: "Sanctuary", links: ["Community", "Resources", "Crisis Support"] },
+             { title: "Legal", links: ["Privacy Policy", "Terms of Use", "Compliance"] }
+          ].map((col) => (
+             <div key={col.title} className="space-y-6">
+                <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-foreground">{col.title}</h4>
+                <ul className="space-y-4">
+                   {col.links.map(link => (
+                      <li key={link}><a href="#" className="text-muted-foreground hover:text-primary transition-colors font-medium">{link}</a></li>
+                   ))}
+                </ul>
+             </div>
+          ))}
+        </div>
+        
+        <div className="max-w-7xl mx-auto pt-20 mt-20 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-6 text-xs font-bold uppercase tracking-widest text-muted-foreground/60">
+           <p>&copy; 2025 SoulSync. Neural Design Enabled.</p>
+           <p>Made with 💜 for a better world</p>
         </div>
       </footer>
     </div>

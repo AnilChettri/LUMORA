@@ -1,6 +1,30 @@
 import type { MoodType } from "@shared/schema";
 import { speakText } from "@/lib/aiMocks";
 
+const SESSION_STORAGE_KEY = "soulsync_session_state";
+
+function saveSessionState(type: "exercise" | "game" | "music", details: Record<string, unknown>) {
+  try {
+    const state = {
+      active: true,
+      type,
+      ...details,
+      startedAt: Date.now(),
+    };
+    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.warn("Could not save session state", e);
+  }
+}
+
+function clearSessionState() {
+  try {
+    localStorage.removeItem(SESSION_STORAGE_KEY);
+  } catch (e) {
+    console.warn("Could not clear session state", e);
+  }
+}
+
 /**
  * Phase 1: dev-ready mood → intervention planner.
  *
@@ -233,6 +257,10 @@ export function runPlan(
     if (navStep.autoStart) {
       params.set("autoStart", "true");
     }
+    saveSessionState("exercise", {
+      exerciseId: navStep.id,
+      exerciseCategory: navStep.category,
+    });
     navigate(`/exercises?${params.toString()}&fromMoodOverride=1`);
     return;
   }
@@ -243,6 +271,7 @@ export function runPlan(
     if (navStep.autoStart) {
       params.set("autoStart", "true");
     }
+    saveSessionState("game", { exerciseId: navStep.id });
     navigate(`/games?${params.toString()}&fromMoodOverride=1`);
     return;
   }
@@ -253,6 +282,7 @@ export function runPlan(
     if (navStep.autoPlay) {
       params.set("autoPlay", "true");
     }
+    saveSessionState("music", { mood: navStep.mood });
     navigate(`/music?${params.toString()}&fromMoodOverride=1`);
   }
 }

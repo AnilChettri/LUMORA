@@ -116,44 +116,54 @@ export default function JournalPage() {
   };
 
   const groupedJournals = groupJournalsByDate(journals || []);
-  const todayPrompt = journalPrompts[new Date().getDay()];
+  const todayPrompt = journalPrompts[new Date().getDay() % journalPrompts.length];
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
 
-      <div className="container px-4 py-6 max-w-7xl mx-auto">
+      <motion.div 
+        className="container px-4 py-8 max-w-7xl mx-auto"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12">
           <div>
-            <h1 className="text-2xl font-display font-bold mb-1">Journal</h1>
-            <p className="text-muted-foreground text-sm">
-              Reflect on your thoughts and emotions
+            <h1 className="text-4xl font-display font-bold mb-2 tracking-tight">Journal</h1>
+            <p className="text-muted-foreground text-lg max-w-md">
+              A quiet space for your reflections and discoveries.
             </p>
           </div>
 
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
             <DialogTrigger asChild>
-              <Button data-testid="button-new-entry">
-                <Plus className="w-4 h-4 mr-2" />
+              <Button 
+                size="lg"
+                className="h-14 px-8 rounded-2xl font-bold bg-primary shadow-lg shadow-primary/20 hover:scale-105 transition-transform"
+                data-testid="button-new-entry"
+              >
+                <Plus className="w-5 h-5 mr-2" />
                 New Entry
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-[2rem] super-glass border-white/20">
               <DialogHeader>
-                <DialogTitle>Write a Journal Entry</DialogTitle>
+                <DialogTitle className="text-2xl font-display font-bold">Write Your Story</DialogTitle>
               </DialogHeader>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleCreateJournal)} className="space-y-4">
+                <form onSubmit={form.handleSubmit(handleCreateJournal)} className="space-y-6 pt-4">
                   <FormField
                     control={form.control}
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Title</FormLabel>
+                        <FormLabel className="text-sm font-bold uppercase tracking-wider opacity-60">Title</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="Give your entry a title"
+                            placeholder="A title for this moment..."
+                            className="h-14 rounded-2xl border-2 border-primary/10 bg-primary/5 focus-visible:ring-primary focus-visible:border-primary text-lg font-medium"
                             {...field}
                             data-testid="input-journal-title"
                           />
@@ -168,11 +178,11 @@ export default function JournalPage() {
                     name="content"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>What's on your mind?</FormLabel>
+                        <FormLabel className="text-sm font-bold uppercase tracking-wider opacity-60">What's on your mind?</FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder="Write freely..."
-                            rows={8}
+                            placeholder="Let your thoughts flow..."
+                            className="min-h-[250px] rounded-2xl border-2 border-primary/10 bg-primary/5 focus-visible:ring-primary focus-visible:border-primary text-base leading-relaxed resize-none"
                             {...field}
                             data-testid="input-journal-content"
                           />
@@ -187,18 +197,18 @@ export default function JournalPage() {
                     name="moodTag"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>How are you feeling?</FormLabel>
-                        <div className="flex flex-wrap gap-2">
+                        <FormLabel className="text-sm font-bold uppercase tracking-wider opacity-60">Emotion</FormLabel>
+                        <div className="flex flex-wrap gap-3">
                           {moodOptions.map((mood) => (
                             <Button
                               key={mood.value}
                               type="button"
                               variant={field.value === mood.value ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => field.onChange(mood.value)}
                               className={cn(
-                                field.value === mood.value && mood.color
+                                "rounded-full px-6 transition-all",
+                                field.value === mood.value ? "scale-105 shadow-md" : "opacity-70 hover:opacity-100"
                               )}
+                              onClick={() => field.onChange(mood.value)}
                               data-testid={`button-mood-${mood.value}`}
                             >
                               {mood.label}
@@ -210,20 +220,22 @@ export default function JournalPage() {
                     )}
                   />
 
-                  <div className="flex justify-end gap-2 pt-2">
+                  <div className="flex justify-end gap-3 pt-4">
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="ghost"
+                      className="rounded-xl h-12 px-6 font-bold"
                       onClick={() => {
                         setShowCreateDialog(false);
                         setSelectedPrompt("");
                       }}
                     >
-                      Cancel
+                      Discard
                     </Button>
                     <Button
                       type="submit"
                       disabled={createJournalMutation.isPending}
+                      className="rounded-xl h-12 px-10 font-bold bg-primary shadow-lg shadow-primary/20"
                       data-testid="button-save-journal"
                     >
                       {createJournalMutation.isPending ? (
@@ -239,87 +251,101 @@ export default function JournalPage() {
           </Dialog>
         </div>
 
-        {/* Today's Prompt */}
+        {/* Today's Prompt - Featured Card */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="mb-12"
         >
-          <Card
-            className="p-5 bg-gradient-to-br from-purple-500/10 via-violet-500/5 to-indigo-500/10 border-purple-200/30 dark:border-purple-800/30 cursor-pointer hover-elevate max-w-3xl mx-auto"
+          <div
+            className="group relative overflow-hidden rounded-[2.5rem] p-1 shadow-xl cursor-pointer hover:shadow-2xl transition-all duration-500 max-w-4xl mx-auto"
             onClick={() => handlePromptClick(todayPrompt)}
             data-testid="card-todays-prompt"
           >
-            <div className="flex items-start gap-4">
-              <div className="shrink-0">
-                <LumiCharacter size="sm" mood="calm" animate={false} />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-accent/10 to-transparent animate-pulse" />
+            <div className="relative super-glass rounded-[2.4rem] p-8 md:p-10 flex flex-col md:flex-row items-center gap-8">
+              <div className="shrink-0 scale-125 md:scale-150">
+                <LumiCharacter size="sm" mood="calm" animate={true} />
               </div>
-              <div className="flex-1">
-                <p className="text-sm text-muted-foreground mb-1 flex items-center gap-1">
-                  <Sparkles className="w-4 h-4" />
-                  Today's prompt
-                </p>
-                <p className="font-medium">{todayPrompt}</p>
+              <div className="flex-1 text-center md:text-left space-y-3">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest">
+                  <Sparkles className="w-3 h-3" />
+                  Daily Reflection
+                </div>
+                <h2 className="text-2xl md:text-3xl font-display font-bold leading-tight">
+                  {todayPrompt}
+                </h2>
+                <p className="text-muted-foreground font-medium">Tap to start writing...</p>
               </div>
-              <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
+              <div className="hidden md:flex w-14 h-14 rounded-full bg-primary text-white items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
+                <ChevronRight className="w-8 h-8" />
+              </div>
             </div>
-          </Card>
+          </div>
         </motion.div>
 
-        {/* More Prompts */}
-        <div className="mb-8 max-w-5xl mx-auto">
-          <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-            <Heart className="w-5 h-5 text-primary" />
-            Need inspiration?
-          </h2>
-          <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 custom-scrollbar md:mx-0 md:px-0">
+        {/* More Prompts - Horizontal Scroll */}
+        <div className="mb-16 max-w-5xl mx-auto overflow-hidden">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Heart className="w-4 h-4 text-primary" />
+            </div>
+            <h2 className="text-xl font-bold font-display">Need inspiration?</h2>
+          </div>
+          <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 custom-scrollbar">
             {journalPrompts.map((prompt, i) => (
-              <Button
+              <motion.div
                 key={i}
-                variant="outline"
-                size="sm"
-                className="shrink-0 text-left"
-                onClick={() => handlePromptClick(prompt)}
-                data-testid={`button-prompt-${i}`}
+                whileHover={{ y: -4 }}
+                className="shrink-0"
               >
-                {prompt}
-              </Button>
+                <Button
+                  variant="outline"
+                  className="h-14 rounded-2xl px-6 border-primary/10 bg-primary/5 hover:bg-primary/10 hover:border-primary/20 text-base font-medium transition-all"
+                  onClick={() => handlePromptClick(prompt)}
+                  data-testid={`button-prompt-${i}`}
+                >
+                  {prompt}
+                </Button>
+              </motion.div>
             ))}
           </div>
         </div>
 
-        {/* Journal Entries */}
+        {/* Journal Entries Grid */}
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-primary" />
-            Your Entries
-          </h2>
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <BookOpen className="w-5 h-5 text-primary" />
+            </div>
+            <h2 className="text-2xl font-bold font-display">Your Collection</h2>
+          </div>
 
           {isLoading ? (
-            <div className="space-y-4">
-              {[...Array(3)].map((_, i) => (
-                <Card key={i} className="p-4">
-                  <LoadingSkeleton className="h-4 w-1/4 mb-2" />
-                  <LoadingSkeleton className="h-5 w-3/4 mb-2" />
-                  <LoadingSkeleton className="h-16 w-full" />
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {[...Array(6)].map((_, i) => (
+                <Card key={i} className="p-6 rounded-[2rem] border-primary/10 bg-primary/5">
+                  <LoadingSkeleton className="h-4 w-1/4 mb-4" />
+                  <LoadingSkeleton className="h-6 w-3/4 mb-4" />
+                  <LoadingSkeleton className="h-24 w-full rounded-xl" />
                 </Card>
               ))}
             </div>
           ) : journals && journals.length > 0 ? (
-            <div className="space-y-8">
+            <div className="space-y-12">
               {Object.entries(groupedJournals).map(([date, entries]) => (
                 <div key={date}>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    {date}
-                  </h3>
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  <div className="flex items-center gap-3 mb-6">
+                    <span className="text-sm font-bold uppercase tracking-[0.2em] text-muted-foreground/60">{date}</span>
+                    <div className="h-px flex-1 bg-gradient-to-r from-border to-transparent" />
+                  </div>
+                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {entries.map((entry, index) => (
                       <motion.div
                         key={entry.id}
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: index * 0.05 }}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
                       >
                         <JournalEntryCard
                           entry={entry}
@@ -332,56 +358,74 @@ export default function JournalPage() {
               ))}
             </div>
           ) : (
-            <Card className="p-12 text-center">
-              <PenLine className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-              <h3 className="text-lg font-semibold mb-2">No entries yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Start your journaling journey today
+            <div className="super-glass rounded-[3rem] p-20 text-center max-w-2xl mx-auto border-dashed border-2 border-primary/20">
+              <PenLine className="w-20 h-20 mx-auto mb-6 text-primary/20" />
+              <h3 className="text-2xl font-bold font-display mb-3">Begin Your Story</h3>
+              <p className="text-muted-foreground text-lg mb-8">
+                Your first entry is just a thought away.
               </p>
-              <Button onClick={() => setShowCreateDialog(true)}>
-                <Plus className="w-4 h-4 mr-2" />
+              <Button 
+                size="lg"
+                onClick={() => setShowCreateDialog(true)}
+                className="h-14 px-10 rounded-2xl font-bold bg-primary shadow-xl shadow-primary/20 hover:scale-105 transition-transform"
+              >
+                <Plus className="w-5 h-5 mr-2" />
                 Write First Entry
               </Button>
-            </Card>
+            </div>
           )}
         </div>
 
         {/* Entry Detail Dialog */}
-        <Dialog open={!!selectedEntry} onOpenChange={() => setSelectedEntry(null)}>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-            {selectedEntry && (
-              <>
-                <DialogHeader>
-                  <DialogTitle>{selectedEntry.title}</DialogTitle>
-                </DialogHeader>
-                <div className="flex items-center gap-2 mb-4">
-                  <Badge variant="secondary" className="text-xs">
-                    <Clock className="w-3 h-3 mr-1" />
-                    {new Date(selectedEntry.createdAt!).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </Badge>
-                  {selectedEntry.moodTag && (
-                    <Badge
-                      variant="outline"
-                      className={moodOptions.find(m => m.value === selectedEntry.moodTag)?.color}
-                    >
-                      {selectedEntry.moodTag}
-                    </Badge>
-                  )}
-                </div>
-                <div className="prose prose-sm dark:prose-invert max-w-none">
-                  <p className="whitespace-pre-wrap">{selectedEntry.content}</p>
-                </div>
-              </>
-            )}
-          </DialogContent>
-        </Dialog>
-      </div>
+        <AnimatePresence>
+          {selectedEntry && (
+            <Dialog open={!!selectedEntry} onOpenChange={() => setSelectedEntry(null)}>
+              <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto rounded-[3rem] p-0 border-none bg-transparent shadow-none">
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="super-glass rounded-[3rem] p-10 md:p-16 border border-white/20 shadow-2xl"
+                >
+                  <div className="flex flex-col md:flex-row items-start justify-between gap-6 mb-10">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        {selectedEntry.moodTag && (
+                          <Badge
+                            variant="secondary"
+                            className={cn(
+                              "px-4 py-1 rounded-full text-sm font-bold shadow-sm",
+                              moodOptions.find(m => m.value === selectedEntry.moodTag)?.color
+                            )}
+                          >
+                            {selectedEntry.moodTag}
+                          </Badge>
+                        )}
+                        <span className="text-muted-foreground font-medium flex items-center gap-2">
+                          <Clock className="w-4 h-4" />
+                          {new Date(selectedEntry.createdAt!).toLocaleDateString("en-US", {
+                            month: "long",
+                            day: "numeric",
+                            year: "numeric"
+                          })}
+                        </span>
+                      </div>
+                      <h1 className="text-3xl md:text-4xl font-display font-bold leading-tight tracking-tight">
+                        {selectedEntry.title}
+                      </h1>
+                    </div>
+                  </div>
+                  <div className="prose prose-lg dark:prose-invert max-w-none">
+                    <p className="whitespace-pre-wrap leading-relaxed text-foreground/80 font-serif italic text-lg md:text-xl">
+                      {selectedEntry.content}
+                    </p>
+                  </div>
+                </motion.div>
+              </DialogContent>
+            </Dialog>
+          )}
+        </AnimatePresence>
+      </motion.div>
     </div>
   );
 }
@@ -403,28 +447,37 @@ function JournalEntryCard({
   });
 
   return (
-    <Card
-      className="p-4 hover-elevate cursor-pointer transition-all"
-      onClick={onClick}
-      data-testid={`card-journal-${entry.id}`}
+    <motion.div
+      whileHover={{ y: -8, scale: 1.02 }}
+      className="h-full"
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <h4 className="font-medium truncate">{entry.title}</h4>
-            {moodInfo && (
-              <Badge variant="outline" className={cn("text-xs", moodInfo.color)}>
-                {moodInfo.label}
-              </Badge>
-            )}
-          </div>
-          <p className="text-sm text-muted-foreground line-clamp-2">
+      <Card
+        className="h-full p-8 rounded-[2rem] glass-card border-white/20 hover:border-primary/30 cursor-pointer transition-all duration-500 shadow-lg hover:shadow-2xl flex flex-col"
+        onClick={onClick}
+        data-testid={`card-journal-${entry.id}`}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-xs font-bold text-muted-foreground/60 uppercase tracking-widest">{time}</span>
+          {moodInfo && (
+            <div className={cn("w-3 h-3 rounded-full shadow-sm", moodInfo.color.split(" ")[0])} />
+          )}
+        </div>
+        
+        <div className="flex-1 space-y-3">
+          <h4 className="text-xl font-bold font-display leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+            {entry.title}
+          </h4>
+          <p className="text-muted-foreground text-sm line-clamp-3 leading-relaxed">
             {entry.content}
           </p>
         </div>
-        <span className="text-xs text-muted-foreground shrink-0">{time}</span>
-      </div>
-    </Card>
+
+        <div className="mt-6 pt-4 border-t border-primary/5 flex items-center justify-between text-xs font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+          <span>Read Entry</span>
+          <ChevronRight className="w-4 h-4" />
+        </div>
+      </Card>
+    </motion.div>
   );
 }
 

@@ -1,7 +1,8 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { LumiCharacter } from "@/components/animations/LumiCharacter";
 import { BreathingCircle } from "@/components/animations/BreathingCircle";
 import { ParticleField } from "@/components/animations/ParticleField";
@@ -60,239 +61,240 @@ export default function Crisis() {
   const [currentGroundingStep, setCurrentGroundingStep] = useState(0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950 relative">
-      {/* Animated gradient orbs */}
-      <motion.div
-        className="absolute top-1/4 left-1/3 w-80 h-80 bg-red-500/15 rounded-full blur-3xl -z-10"
-        animate={{
-          y: [0, 40, 0],
-          x: [0, 20, 0],
-        }}
-        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl -z-10"
-        animate={{
-          y: [0, -40, 0],
-          x: [0, -20, 0],
-        }}
-        transition={{ duration: 25, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-      />
+    <div className="min-h-screen relative overflow-x-hidden">
+      {/* Immersive Soothing Background */}
+      <div className="fixed inset-0 -z-20 pointer-events-none">
+         <div className="absolute inset-0 bg-gradient-to-br from-rose-950/20 via-slate-950 to-indigo-950/20" />
+         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(244,63,94,0.08),transparent_60%)]" />
+         <div className="absolute inset-0 bg-[radial_gradient(circle_at_bottom,rgba(99,102,241,0.08),transparent_60%)]" />
+      </div>
       
-      <ParticleField count={40} color="mixed" />
+      <ParticleField count={30} color="mixed" />
       
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-red-600/80 backdrop-blur-sm text-white">
-        <div className="container px-4 py-4 flex items-center gap-4">
+      {/* Clean Header */}
+      <header className="sticky top-0 z-50 bg-rose-600/10 backdrop-blur-xl border-b border-rose-500/20 text-white">
+        <div className="container px-4 h-16 flex items-center justify-between max-w-4xl mx-auto">
           <Link href="/">
-            <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
-              <ArrowLeft className="w-5 h-5" />
+            <Button variant="ghost" size="sm" className="rounded-xl font-bold hover:bg-white/10 gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Return
             </Button>
           </Link>
-          <div className="flex items-center gap-2">
-            <Heart className="w-5 h-5" />
-            <span className="font-semibold">Crisis Support</span>
+          <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-500/20 border border-rose-500/30">
+            <Shield className="w-4 h-4 text-rose-400" />
+            <span className="text-xs font-bold uppercase tracking-widest text-rose-100">Immediate Support</span>
+          </div>
+          <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
+             <Heart className="w-5 h-5 text-rose-400 fill-current" />
           </div>
         </div>
       </header>
 
-      <div className="container px-4 py-6 max-w-2xl mx-auto">
-        {/* Lumi Message */}
+      <div className="container px-4 py-12 max-w-2xl mx-auto space-y-10">
+        {/* Lumi Message - Highly Immersive */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
         >
-          <Card className="p-6 bg-gradient-to-br from-purple-500/10 via-violet-500/5 to-indigo-500/10 border-purple-200/30 dark:border-purple-800/30">
-            <div className="flex items-start gap-4">
-              <LumiCharacter size="md" mood="calm" />
-              <div>
-                <h1 className="text-xl font-bold mb-2">You're Not Alone</h1>
-                <p className="text-muted-foreground">
-                  I'm here with you. Whatever you're going through right now, 
-                  there are people who want to help. Please reach out to one of 
-                  these resources - they're available 24/7 and want to support you.
+          <Card className="p-8 super-glass border-rose-500/20 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-40 h-40 bg-rose-500/10 blur-[60px] -z-10" />
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-8 text-center md:text-left">
+              <div className="shrink-0 p-4 rounded-[2rem] bg-white/5 border border-white/10 shadow-inner">
+                 <LumiCharacter size="lg" mood="calm" />
+              </div>
+              <div className="space-y-4">
+                <h1 className="text-4xl font-display font-bold leading-tight">I Am <span className="text-rose-400">With You.</span></h1>
+                <p className="text-muted-foreground text-lg leading-relaxed">
+                  Deep breaths. You are in a safe space. No matter how dark it feels, there is a path forward. 
+                  Reach out to these specialized teams—they are waiting to hold space for you right now.
                 </p>
               </div>
             </div>
           </Card>
         </motion.div>
 
-        {/* Crisis Hotlines */}
+        {/* Crisis Hotlines - Urgent Focus */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="mb-8"
+          className="space-y-6"
         >
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Phone className="w-5 h-5 text-destructive" />
-            Crisis Resources
-          </h2>
-          <div className="space-y-3">
+          <div className="flex items-center justify-between px-2">
+             <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+               <Phone className="w-4 h-4" />
+               National Support Lines
+             </h2>
+             <Badge className="bg-rose-500 text-white animate-pulse border-none px-3">24/7 Available</Badge>
+          </div>
+
+          <div className="space-y-4">
             {crisisResources.map((resource, index) => (
               <Card
                 key={index}
                 className={cn(
-                  "p-4 transition-all",
-                  resource.primary && "border-destructive bg-destructive/5"
+                  "p-6 glass-card border-white/10 hover:border-rose-500/40 transition-all duration-500 rounded-[2rem] group",
+                  resource.primary && "border-rose-500/30 bg-rose-500/5"
                 )}
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h3 className="font-semibold mb-1">{resource.name}</h3>
-                    <p className="text-sm text-muted-foreground mb-2">
+                <div className="flex items-center justify-between gap-6">
+                  <div className="flex-1 space-y-1">
+                    <h3 className="text-xl font-display font-bold group-hover:text-rose-400 transition-colors">{resource.name}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
                       {resource.description}
                     </p>
-                    {resource.country && (
-                      <span className="text-xs text-muted-foreground">
-                        {resource.country}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-3 mt-2">
+                       <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest">{resource.country || "Global"}</span>
+                       {resource.textBased && <Badge variant="outline" className="text-[9px] border-rose-500/20 text-rose-400">TEXT ONLY</Badge>}
+                    </div>
                   </div>
                   
-                  {resource.international ? (
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={resource.number} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="w-4 h-4 mr-2" />
-                        Find Help
-                      </a>
-                    </Button>
-                  ) : resource.textBased ? (
-                    <Button variant="outline" size="sm">
-                      <MessageCircle className="w-4 h-4 mr-2" />
-                      Text
-                    </Button>
-                  ) : (
-                    <Button 
-                      variant={resource.primary ? "destructive" : "outline"} 
-                      size="sm"
-                      asChild
-                    >
-                      <a href={`tel:${resource.number.replace(/[^0-9]/g, '')}`}>
-                        <Phone className="w-4 h-4 mr-2" />
-                        Call {resource.number}
-                      </a>
-                    </Button>
-                  )}
+                  <div className="shrink-0">
+                    {resource.international ? (
+                      <Button className="rounded-xl h-12 px-6 font-bold bg-white/5 hover:bg-white/10 border-white/10" asChild>
+                        <a href={resource.number} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          View Sites
+                        </a>
+                      </Button>
+                    ) : (
+                      <Button 
+                        className={cn(
+                          "rounded-xl h-14 px-8 font-bold shadow-lg shadow-rose-500/10 hover:scale-105 transition-transform",
+                          resource.primary ? "bg-rose-600 hover:bg-rose-500" : "bg-white/5 hover:bg-white/10"
+                        )}
+                        asChild
+                      >
+                        <a href={`tel:${resource.number.replace(/[^0-9]/g, '')}`}>
+                          <Phone className="w-5 h-5 mr-3 fill-current" />
+                          {resource.number}
+                        </a>
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </Card>
             ))}
           </div>
         </motion.div>
 
-        {/* Quick Calming Tools */}
+        {/* Immediate Grounding Tools */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="mb-8"
+          className="space-y-6"
         >
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Shield className="w-5 h-5 text-primary" />
-            Calming Tools
+          <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2 px-2">
+             <Wind className="w-4 h-4" />
+             Instant Grounding
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Breathing Exercise */}
-            <Card className="p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Wind className="w-5 h-5 text-primary" />
-                <h3 className="font-semibold">Breathing Exercise</h3>
+            <Card className="p-8 glass-card border-white/10 rounded-[2.5rem] flex flex-col items-center justify-center min-h-[320px] text-center space-y-6">
+              <div className="space-y-2">
+                <h3 className="text-xl font-display font-bold">Guided Breath</h3>
+                <p className="text-xs text-muted-foreground uppercase tracking-widest">Restore Balance</p>
               </div>
               
               {showBreathing ? (
-                <div className="flex flex-col items-center">
+                <div className="flex flex-col items-center space-y-8">
                   <BreathingCircle 
                     pattern="relaxing" 
                     isActive={showBreathing} 
-                    size="md"
+                    size="lg"
                   />
                   <Button 
-                    variant="outline" 
+                    variant="ghost" 
                     size="sm" 
                     onClick={() => setShowBreathing(false)}
-                    className="mt-4"
+                    className="rounded-full text-rose-400 font-bold hover:bg-rose-500/10"
                   >
-                    Stop
+                    Finish Session
                   </Button>
                 </div>
               ) : (
                 <Button 
-                  variant="outline" 
-                  className="w-full"
+                  className="w-full h-14 rounded-2xl font-bold bg-primary shadow-xl shadow-primary/20"
                   onClick={() => setShowBreathing(true)}
                   data-testid="button-start-breathing"
                 >
-                  Start Breathing Exercise
+                  <Wind className="w-5 h-5 mr-3" />
+                  Begin Breathing
                 </Button>
               )}
             </Card>
 
             {/* Grounding Exercise */}
-            <Card className="p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Users className="w-5 h-5 text-primary" />
-                <h3 className="font-semibold">5-4-3-2-1 Grounding</h3>
+            <Card className="p-8 glass-card border-white/10 rounded-[2.5rem] flex flex-col space-y-6">
+              <div className="space-y-2 text-center">
+                <h3 className="text-xl font-display font-bold">5-4-3-2-1 Technique</h3>
+                <p className="text-xs text-muted-foreground uppercase tracking-widest">Connect to Presence</p>
               </div>
               
-              <div className="space-y-2">
+              <div className="flex-1 space-y-2.5">
                 {groundingSteps.map((step, index) => (
-                  <div
+                  <motion.div
                     key={index}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{
+                      opacity: index === currentGroundingStep ? 1 : (index < currentGroundingStep ? 0.3 : 0.1),
+                      scale: index === currentGroundingStep ? 1 : 0.98,
+                    }}
                     className={cn(
-                      "p-2 rounded-lg text-sm transition-all",
+                      "p-3.5 rounded-2xl border transition-all duration-500",
                       index === currentGroundingStep
-                        ? "bg-primary/10 border border-primary/30 font-medium"
-                        : index < currentGroundingStep
-                        ? "bg-green-50 dark:bg-green-900/20 text-muted-foreground line-through"
-                        : "text-muted-foreground"
+                        ? "bg-primary/10 border-primary/30 shadow-md"
+                        : "bg-white/5 border-transparent"
                     )}
                   >
-                    {step}
-                  </div>
+                    <div className="flex items-center gap-3">
+                       <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold", index === currentGroundingStep ? "bg-primary text-white" : "bg-white/10")}>
+                          {5 - index}
+                       </div>
+                       <span className="text-sm font-medium">{step}</span>
+                    </div>
+                  </motion.div>
                 ))}
               </div>
               
-              <div className="flex gap-2 mt-3">
+              <div className="flex gap-3 pt-4">
                 <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
+                  variant="ghost"
+                  className="flex-1 rounded-xl font-bold h-12"
                   onClick={() => setCurrentGroundingStep(0)}
                   disabled={currentGroundingStep === 0}
                 >
                   Reset
                 </Button>
                 <Button
-                  size="sm"
-                  className="flex-1"
+                  className="flex-1 rounded-xl font-bold h-12 bg-white/10 hover:bg-white/20"
                   onClick={() => setCurrentGroundingStep(prev => 
                     Math.min(prev + 1, groundingSteps.length)
                   )}
                   disabled={currentGroundingStep >= groundingSteps.length}
                   data-testid="button-next-grounding"
                 >
-                  Next
+                  {currentGroundingStep >= groundingSteps.length ? "Completed" : "Next Sense"}
                 </Button>
               </div>
             </Card>
           </div>
         </motion.div>
 
-        {/* Important Note */}
+        {/* Footer Note */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="text-center space-y-4 py-8"
         >
-          <Card className="p-4 bg-muted/50 border-muted">
-            <p className="text-sm text-muted-foreground text-center">
-              Lumi is an AI companion and cannot provide emergency services. 
-              If you are in immediate danger, please call your local emergency number 
-              or go to the nearest emergency room.
-            </p>
-          </Card>
+          <div className="w-12 h-1 bg-white/10 mx-auto rounded-full" />
+          <p className="text-xs text-muted-foreground/60 leading-relaxed max-w-sm mx-auto italic">
+            Lumi is an AI companion and cannot provide emergency services. 
+            If you are in immediate danger, please use the links above or visit your nearest emergency facility.
+          </p>
         </motion.div>
       </div>
     </div>

@@ -9,6 +9,7 @@ import {
   getFallbackResponse,
   isOpenAIConfigured 
 } from "./openaiIntegration";
+import { lumiAgent } from "./geminiAgent";
 import OpenAI from "openai";
 import { z } from "zod";
 import {
@@ -275,56 +276,55 @@ export async function registerRoutes(
 
   // === VOICE AGENT ROUTES ===
 
-  // Chat with Lumi - Voice Agent with OpenAI
+  // Chat with Lumi - Intelligent Agent with Gemini/OpenAI/Fallback
   app.post("/api/voice-agent", ensureAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { message } = req.body;
+      const { message, currentMood } = req.body;
 
       if (!message) {
         return res.status(400).json({ message: "Message is required" });
       }
 
-      // Get or create conversation
-      let conversation = await storage.getConversation(userId);
-      const messages: any[] = (conversation?.messages as any[]) || [];
-      
-      // Check sentiment for safety
+      // Check sentiment for safety first
       const sentiment = detectSentiment(message);
       if (sentiment === 'concerning') {
         const crisisResponse = getCrisisResources();
-        messages.push({ role: "user", content: message });
-        messages.push({ role: "assistant", content: crisisResponse });
-        await storage.upsertConversation(userId, messages);
-        return res.json({ response: crisisResponse, sentiment });
+        return res.json({ response: crisisResponse, sentiment, suggestedAction: { type: 'none' } });
       }
 
-      // Use OpenAI if available, otherwise fallback
-      let response: string;
+      // Update mood context in agent
+      if (currentMood) {
+        lumiAgent.setMood(userId, currentMood);
+      }
+
+      // Get response from agent
+      const agentResponse = await lumiAgent.generateResponse(userId, message);
       
-      if (isOpenAIConfigured() && openai) {
-        response = await chatWithLumi(message, {
-          userId,
-          messages: messages.slice(-10), // Keep last 10 messages for context
-        });
-      } else {
-        response = getFallbackResponse(message);
+      // Log activity if suggested
+      if (agentResponse.suggestedAction?.type && agentResponse.suggestedAction.type !== 'none') {
+        lumiAgent.addActivity(userId, agentResponse.suggestedAction.type);
       }
 
-      // Update conversation history
-      messages.push({ role: "user", content: message });
-      messages.push({ role: "assistant", content: response });
-
-      // Save conversation
-      await storage.upsertConversation(userId, messages);
-
-      res.json({ response, sentiment });
+      res.json({ 
+        response: agentResponse.response, 
+        sentiment,
+        suggestedAction: agentResponse.suggestedAction,
+        moodInsight: agentResponse.moodInsight,
+      });
     } catch (error) {
       console.error("Error in voice agent:", error);
       res.status(500).json({ 
         response: "I'm having a moment - could you try again? I really want to hear what you have to say." 
       });
     }
+  });
+
+  // Get session time remaining
+  app.get("/api/voice-agent/session", ensureAuthenticated, (req: any, res) => {
+    const userId = req.user.claims.sub;
+    const remainingTime = lumiAgent.getRemainingTime(userId);
+    res.json({ remainingTime });
   });
 
   return httpServer;

@@ -24,8 +24,8 @@ export function MobileNav() {
   const [location] = useLocation();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-t border-border safe-bottom md:hidden">
-      <div className="flex items-center justify-around px-2 py-2">
+    <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md md:hidden">
+      <div className="super-glass rounded-[2rem] px-4 py-2 flex items-center justify-around shadow-2xl">
         {navItems.map((item) => {
           const isActive = location === item.path;
           const Icon = item.icon;
@@ -34,17 +34,25 @@ export function MobileNav() {
             <Link key={item.path} href={item.path}>
               <motion.div
                 className={cn(
-                  "flex flex-col items-center justify-center w-16 py-1.5 rounded-xl transition-colors touch-target",
-                  isActive ? "text-primary" : "text-muted-foreground"
+                  "relative flex flex-col items-center justify-center w-14 py-2 rounded-2xl transition-all duration-300 touch-target",
+                  isActive ? "text-primary scale-110" : "text-muted-foreground/70 hover:text-muted-foreground"
                 )}
-                whileTap={{ scale: 0.95 }}
+                whileTap={{ scale: 0.9 }}
                 data-testid={`nav-${item.label.toLowerCase()}`}
               >
-                <div className="relative">
-                  <Icon className="w-5 h-5" />
+                {isActive && (
+                  <motion.div
+                    layoutId="navBackground"
+                    className="absolute inset-0 bg-primary/10 rounded-2xl"
+                    initial={false}
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  />
+                )}
+                <div className="relative z-10">
+                  <Icon className={cn("w-6 h-6", isActive ? "stroke-[2.5px]" : "stroke-[2px]")} />
                   {isActive && (
                     <motion.div
-                      className="absolute -bottom-1 left-1/2 w-1 h-1 rounded-full bg-primary"
+                      className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-primary"
                       layoutId="navIndicator"
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
@@ -52,7 +60,7 @@ export function MobileNav() {
                     />
                   )}
                 </div>
-                <span className="text-[10px] font-medium mt-1">{item.label}</span>
+                <span className="text-[10px] font-bold mt-1 z-10">{item.label}</span>
               </motion.div>
             </Link>
           );

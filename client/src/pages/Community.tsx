@@ -45,6 +45,7 @@ import {
   Flag,
   Eye,
   EyeOff,
+  ChevronRight,
 } from "lucide-react";
 
 const categories: { id: CategoryType | "all"; label: string; color: string }[] = [
@@ -111,8 +112,8 @@ export default function Community() {
       setShowCreateDialog(false);
       form.reset();
       toast({
-        title: "Post created!",
-        description: "Your post has been shared with the community.",
+        title: "Post shared with the world!",
+        description: "Your voice matters, and the community is listening.",
       });
     },
     onError: () => {
@@ -150,41 +151,49 @@ export default function Community() {
   });
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen relative overflow-x-hidden">
       <Header />
 
-      <div className="container px-4 py-6 max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-display font-bold mb-1">Community</h1>
-            <p className="text-muted-foreground text-sm">
-              Share, connect, and support each other
-            </p>
+      <div className="container px-4 py-12 max-w-7xl mx-auto space-y-12">
+        {/* Community Header */}
+        <div className="flex flex-col md:flex-row items-end justify-between gap-6 mb-12">
+          <div className="space-y-4">
+             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest">
+                <Heart className="w-4 h-4 fill-current" />
+                SoulSync Hub
+             </div>
+             <h1 className="text-5xl font-display font-bold tracking-tight">
+                Our <span className="gradient-text">Community</span>
+             </h1>
+             <p className="text-muted-foreground text-lg max-w-xl">
+                A safe, anonymous space to share your journey, offer support, and grow together in empathy.
+             </p>
           </div>
 
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
             <DialogTrigger asChild>
-              <Button data-testid="button-create-post">
-                <Plus className="w-4 h-4 mr-2" />
-                New Post
+              <Button size="lg" className="h-14 px-8 rounded-2xl font-bold bg-primary shadow-xl shadow-primary/20 hover:scale-105 transition-transform" data-testid="button-create-post">
+                <Plus className="w-5 h-5 mr-2" />
+                Share Your Story
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Create a Post</DialogTitle>
+            <DialogContent className="max-w-xl glass-card border-white/20 p-8 rounded-[2.5rem]">
+              <DialogHeader className="mb-6">
+                <DialogTitle className="text-2xl font-display font-bold">New Community Post</DialogTitle>
+                <p className="text-sm text-muted-foreground">Your post will be shared anonymously within the community.</p>
               </DialogHeader>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleCreatePost)} className="space-y-4">
+                <form onSubmit={form.handleSubmit(handleCreatePost)} className="space-y-6">
                   <FormField
                     control={form.control}
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Title</FormLabel>
+                        <FormLabel className="font-bold uppercase text-[10px] tracking-widest text-muted-foreground">Title</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="What's on your mind?"
+                            placeholder="Give your thoughts a name..."
+                            className="h-12 rounded-xl bg-primary/5 border-primary/10 focus-visible:ring-primary"
                             {...field}
                             data-testid="input-post-title"
                           />
@@ -199,11 +208,12 @@ export default function Community() {
                     name="content"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Content</FormLabel>
+                        <FormLabel className="font-bold uppercase text-[10px] tracking-widest text-muted-foreground">Content</FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder="Share your thoughts..."
-                            rows={5}
+                            placeholder="What's truly on your mind today?"
+                            rows={6}
+                            className="rounded-2xl bg-primary/5 border-primary/10 focus-visible:ring-primary resize-none"
                             {...field}
                             data-testid="input-post-content"
                           />
@@ -218,14 +228,14 @@ export default function Community() {
                     name="category"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Category</FormLabel>
+                        <FormLabel className="font-bold uppercase text-[10px] tracking-widest text-muted-foreground">Topic Category</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger data-testid="select-post-category">
+                            <SelectTrigger className="h-12 rounded-xl bg-primary/5 border-primary/10">
                               <SelectValue placeholder="Select a category" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
+                          <SelectContent className="rounded-xl border-white/20 bg-background/95 backdrop-blur-xl">
                             <SelectItem value="anxiety">Anxiety</SelectItem>
                             <SelectItem value="motivation">Motivation</SelectItem>
                             <SelectItem value="wellness">Wellness</SelectItem>
@@ -238,23 +248,25 @@ export default function Community() {
                     )}
                   />
 
-                  <div className="flex justify-end gap-2 pt-2">
+                  <div className="flex justify-end gap-3 pt-4">
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="ghost"
+                      className="rounded-xl font-bold"
                       onClick={() => setShowCreateDialog(false)}
                     >
-                      Cancel
+                      Discard
                     </Button>
                     <Button
                       type="submit"
+                      className="h-12 px-8 rounded-xl font-bold bg-primary"
                       disabled={createPostMutation.isPending}
                       data-testid="button-submit-post"
                     >
                       {createPostMutation.isPending ? (
                         <LoadingSpinner variant="dots" size="sm" />
                       ) : (
-                        "Post"
+                        "Post to Feed"
                       )}
                     </Button>
                   </div>
@@ -264,88 +276,86 @@ export default function Community() {
           </Dialog>
         </div>
 
-        {/* Filters */}
-        <div className="space-y-4 mb-6">
-          {/* Search */}
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search posts..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-              data-testid="input-search-posts"
-            />
+        {/* Search & Navigation Bar */}
+        <div className="flex flex-col lg:flex-row gap-6 items-center justify-between p-2 rounded-[2rem] bg-white/5 border border-white/10 backdrop-blur-xl">
+          <div className="flex items-center gap-2 overflow-x-auto w-full lg:w-auto p-2 no-scrollbar">
+            {categories.map((cat) => (
+              <Button
+                key={cat.id}
+                variant={activeCategory === cat.id ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setActiveCategory(cat.id)}
+                className={cn(
+                  "rounded-xl px-6 font-bold h-12 transition-all",
+                  activeCategory === cat.id ? "bg-primary shadow-lg shadow-primary/20" : "hover:bg-primary/10"
+                )}
+                data-testid={`filter-category-${cat.id}`}
+              >
+                {cat.label}
+              </Button>
+            ))}
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-            {/* Category filters */}
-            <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 custom-scrollbar sm:mx-0 sm:px-0">
-              {categories.map((cat) => (
+          <div className="flex items-center gap-4 w-full lg:w-auto px-4 lg:px-0">
+             <div className="relative flex-1 lg:w-80">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search stories..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-12 pl-12 rounded-xl bg-white/5 border-white/10 focus-visible:ring-primary w-full"
+                />
+             </div>
+             <div className="w-px h-10 bg-white/10 hidden lg:block" />
+             <div className="flex items-center gap-2">
                 <Button
-                  key={cat.id}
-                  variant={activeCategory === cat.id ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setActiveCategory(cat.id)}
-                  className="shrink-0"
-                  data-testid={`filter-category-${cat.id}`}
+                  variant={sortBy === "trending" ? "secondary" : "ghost"}
+                  size="icon"
+                  className={cn("h-12 w-12 rounded-xl transition-all", sortBy === "trending" && "bg-primary/10 text-primary")}
+                  onClick={() => setSortBy("trending")}
                 >
-                  {cat.label}
+                  <TrendingUp className="w-5 h-5" />
                 </Button>
-              ))}
-            </div>
-
-            {/* Sort */}
-            <div className="flex items-center gap-2">
-              <Button
-                variant={sortBy === "trending" ? "secondary" : "ghost"}
-                size="sm"
-                onClick={() => setSortBy("trending")}
-                data-testid="sort-trending"
-              >
-                <TrendingUp className="w-4 h-4 mr-1" />
-                Trending
-              </Button>
-              <Button
-                variant={sortBy === "recent" ? "secondary" : "ghost"}
-                size="sm"
-                onClick={() => setSortBy("recent")}
-                data-testid="sort-recent"
-              >
-                <Clock className="w-4 h-4 mr-1" />
-                Recent
-              </Button>
-            </div>
+                <Button
+                  variant={sortBy === "recent" ? "secondary" : "ghost"}
+                  size="icon"
+                  className={cn("h-12 w-12 rounded-xl transition-all", sortBy === "recent" && "bg-primary/10 text-primary")}
+                  onClick={() => setSortBy("recent")}
+                >
+                  <Clock className="w-5 h-5" />
+                </Button>
+             </div>
           </div>
         </div>
 
-        {/* Posts List */}
-        <div className="space-y-4">
+        {/* Feed Grid */}
+        <div className="space-y-8">
           {isLoading ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[...Array(6)].map((_, i) => (
-                <Card key={i} className="p-4">
-                  <div className="flex gap-3">
-                    <LoadingSkeleton className="w-10 h-10 rounded-full" />
-                    <div className="flex-1 space-y-2">
-                      <LoadingSkeleton className="h-4 w-1/4" />
-                      <LoadingSkeleton className="h-5 w-3/4" />
-                      <LoadingSkeleton className="h-16 w-full" />
+                <Card key={i} className="p-8 glass-card border-white/20 rounded-[2.5rem] space-y-4">
+                  <div className="flex gap-4">
+                    <LoadingSkeleton className="w-12 h-12 rounded-2xl" />
+                    <div className="flex-1 space-y-3">
+                      <LoadingSkeleton className="h-4 w-1/3" />
+                      <LoadingSkeleton className="h-6 w-full" />
+                      <LoadingSkeleton className="h-24 w-full" />
                     </div>
                   </div>
                 </Card>
               ))}
             </div>
           ) : filteredPosts && filteredPosts.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <AnimatePresence>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <AnimatePresence mode="popLayout">
                 {filteredPosts.map((post, index) => (
                   <motion.div
                     key={post.id}
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
                     transition={{ delay: index * 0.05 }}
-                    className="h-full"
+                    layout
                   >
                     <PostCard
                       post={post}
@@ -356,17 +366,28 @@ export default function Community() {
               </AnimatePresence>
             </div>
           ) : (
-            <Card className="p-12 text-center">
-              <MessageCircle className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-              <h3 className="text-lg font-semibold mb-2">No posts yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Be the first to share something with the community!
-              </p>
-              <Button onClick={() => setShowCreateDialog(true)}>
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              className="py-20 text-center space-y-6 max-w-md mx-auto"
+            >
+              <div className="w-24 h-24 rounded-full bg-primary/5 flex items-center justify-center mx-auto">
+                 <MessageCircle className="w-12 h-12 text-primary/40" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-2xl font-display font-bold">Silenced Echoes</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  The silence is profound, but it's an opportunity for your voice to lead the way. Share first.
+                </p>
+              </div>
+              <Button 
+                onClick={() => setShowCreateDialog(true)}
+                className="h-12 px-8 rounded-xl font-bold bg-primary shadow-xl shadow-primary/20"
+              >
                 <Plus className="w-4 h-4 mr-2" />
-                Create Post
+                Start the Conversation
               </Button>
-            </Card>
+            </motion.div>
           )}
         </div>
       </div>
@@ -378,8 +399,8 @@ function PostCard({ post, onUpvote }: { post: PostWithAuthor; onUpvote: () => vo
   const [isBlurred, setIsBlurred] = useState(post.isBlurred);
 
   const authorName = post.author
-    ? `${post.author.firstName || ""} ${post.author.lastName || ""}`.trim() || "Anonymous"
-    : "Anonymous";
+    ? `${post.author.firstName || ""} ${post.author.lastName || ""}`.trim() || "SoulSync Member"
+    : "Anonymous Soul";
 
   const initials = authorName
     .split(" ")
@@ -394,83 +415,104 @@ function PostCard({ post, onUpvote }: { post: PostWithAuthor; onUpvote: () => vo
   return (
     <Card
       className={cn(
-        "p-4 hover-elevate transition-all h-full flex flex-col",
+        "p-8 glass-card border-white/20 hover:border-primary/40 transition-all duration-500 rounded-[2.5rem] shadow-xl hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] flex flex-col group h-full",
         isBlurred && "relative overflow-hidden"
       )}
       data-testid={`card-post-${post.id}`}
     >
-      {/* Blur overlay for sensitive content */}
+      {/* Sensitive Content Mask */}
       {isBlurred && (
-        <div className="absolute inset-0 backdrop-blur-lg bg-background/50 z-10 flex flex-col items-center justify-center p-4">
-          <AlertTriangle className="w-8 h-8 text-amber-500 mb-2" />
-          <p className="text-sm text-center font-medium mb-3">
-            This post may contain sensitive content
-          </p>
+        <div className="absolute inset-0 backdrop-blur-[40px] bg-background/60 z-20 flex flex-col items-center justify-center p-8 text-center space-y-6">
+          <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center">
+             <AlertTriangle className="w-8 h-8 text-amber-500" />
+          </div>
+          <div className="space-y-2">
+            <p className="text-lg font-bold font-display">Tread Carefully</p>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              This message has been flagged for potentially sensitive themes. Your wellbeing is priority.
+            </p>
+          </div>
           <Button
-            size="sm"
+            size="lg"
             variant="outline"
+            className="rounded-xl font-bold h-12 px-8 border-white/10 hover:bg-white/10"
             onClick={() => setIsBlurred(false)}
-            data-testid="button-reveal-post"
           >
             <Eye className="w-4 h-4 mr-2" />
-            View Anyway
+            Unveil Wisdom
           </Button>
         </div>
       )}
 
-      {/* Author info */}
-      <div className="flex items-start gap-3 mb-3">
-        <Avatar className="w-10 h-10">
-          <AvatarImage src={post.author?.profileImageUrl || undefined} />
-          <AvatarFallback className="bg-primary/10 text-primary text-sm">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-medium text-sm">{authorName}</span>
-            <span className="text-xs text-muted-foreground">· {timeAgo}</span>
+      {/* Post Header */}
+      <div className="flex items-start gap-4 mb-8">
+        <div className="relative">
+          <Avatar className="w-14 h-14 rounded-2xl border-2 border-primary/20 shadow-lg">
+            <AvatarImage src={post.author?.profileImageUrl || undefined} />
+            <AvatarFallback className="bg-primary/5 text-primary font-bold">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-background border-2 border-primary/20 flex items-center justify-center overflow-hidden">
+             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           </div>
-          <div className="flex items-center gap-2 mt-1 flex-wrap">
-            <Badge variant="secondary" className={cn("text-xs", categoryInfo?.color)}>
+        </div>
+        <div className="flex-1 space-y-1">
+          <div className="flex items-center justify-between">
+             <span className="font-display font-bold text-lg group-hover:text-primary transition-colors">{authorName}</span>
+             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{timeAgo}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge className={cn("text-[10px] font-bold uppercase tracking-widest border-none px-2 py-0.5", categoryInfo?.color)}>
               {categoryInfo?.label}
             </Badge>
             {post.moodTag && (
-              <Badge variant="outline" className={cn("text-xs", moodColors[post.moodTag])}>
+              <span className={cn("text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full", moodColors[post.moodTag])}>
                 {post.moodTag}
-              </Badge>
+              </span>
             )}
           </div>
         </div>
       </div>
 
-      {/* Post content */}
-      <Link href={`/community/post/${post.id}`}>
-        <h3 className="font-semibold mb-2 hover:text-primary cursor-pointer">
-          {post.title}
-        </h3>
-      </Link>
-      <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
-        {post.content}
-      </p>
-
-      {/* Actions */}
-      <div className="flex items-center gap-4 mt-auto">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onUpvote}
-          className="gap-1 -ml-2"
-          data-testid={`button-upvote-${post.id}`}
-        >
-          <Heart className="w-4 h-4" />
-          <span>{post.upvotes || 0}</span>
-        </Button>
+      {/* Main Text Content */}
+      <div className="flex-1 space-y-4 mb-8">
         <Link href={`/community/post/${post.id}`}>
-          <Button variant="ghost" size="sm" className="gap-1">
-            <MessageCircle className="w-4 h-4" />
-            <span>{post.commentCount || 0}</span>
-          </Button>
+          <h3 className="text-2xl font-display font-bold leading-tight hover:text-primary transition-colors cursor-pointer">
+            {post.title}
+          </h3>
+        </Link>
+        <p className="text-muted-foreground leading-relaxed line-clamp-4">
+          {post.content}
+        </p>
+      </div>
+
+      {/* Engagement Footer */}
+      <div className="pt-6 border-t border-primary/5 flex items-center justify-between">
+        <div className="flex items-center gap-6">
+          <button
+            onClick={onUpvote}
+            className="flex items-center gap-2.5 text-muted-foreground hover:text-rose-500 transition-all group/btn"
+            data-testid={`button-upvote-${post.id}`}
+          >
+            <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center group-hover/btn:bg-rose-500/10 transition-colors">
+               <Heart className={cn("w-5 h-5 transition-all", post.upvotes ? "fill-rose-500 text-rose-500" : "group-hover/btn:scale-110")} />
+            </div>
+            <span className="text-sm font-bold">{post.upvotes || 0}</span>
+          </button>
+          
+          <Link href={`/community/post/${post.id}`} className="flex items-center gap-2.5 text-muted-foreground hover:text-primary transition-all group/btn">
+            <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center group-hover/btn:bg-primary/10 transition-colors">
+               <MessageCircle className="w-5 h-5 group-hover/btn:scale-110" />
+            </div>
+            <span className="text-sm font-bold">{post.commentCount || 0}</span>
+          </Link>
+        </div>
+
+        <Link href={`/community/post/${post.id}`}>
+           <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-primary hover:text-white transition-all">
+              <ChevronRight className="w-5 h-5" />
+           </Button>
         </Link>
       </div>
     </Card>

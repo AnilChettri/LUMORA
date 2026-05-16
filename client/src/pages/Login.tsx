@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { LoadingSpinner } from "@/components/animations/LoadingSpinner";
+import { LoadingSpinner, LoadingSkeleton } from "@/components/animations/LoadingSpinner";
 import { AppShell } from "@/components/layout/AppShell";
 import { ParticleField } from "@/components/animations/ParticleField";
 import { Sparkles, Sun, ArrowRight, AlertCircle, UserCircle } from "lucide-react";
@@ -68,180 +68,173 @@ export default function Login() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      setLocation("/");
+      setLocation("/mood");
     },
     onError: (error) => {
       console.error("Login error:", error);
     },
   });
 
-
   return (
-    <AppShell showNav={false} showCrisisButton={false}>
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950 -z-20" />
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center py-20 px-6">
+      {/* Immersive Background */}
+      <div className="fixed inset-0 -z-30 pointer-events-none">
+         <div className="absolute inset-0 bg-slate-950" />
+         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(139,92,246,0.15),transparent_70%)]" />
+         <div className="absolute inset-0 bg-[radial_gradient(circle_at_0%_100%,rgba(236,72,153,0.1),transparent_50%)]" />
+      </div>
       
-      {/* Animated gradient orbs */}
-      <motion.div
-        className="absolute top-1/4 left-1/4 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl -z-10"
-        animate={{
-          y: [0, 40, 0],
-          x: [0, 20, 0],
-        }}
-        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-violet-500/15 rounded-full blur-3xl -z-10"
-        animate={{
-          y: [0, -40, 0],
-          x: [0, -20, 0],
-        }}
-        transition={{ duration: 25, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-      />
+      <ParticleField count={40} color="mixed" />
       
-      <ParticleField count={50} color="mixed" />
-      
-      <section className="relative z-10 px-6 pt-16 pb-20 md:pt-24">
-        <div className="max-w-5xl mx-auto">
-          {loginMutation.error && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-6"
-            >
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  {loginMutation.error instanceof Error
-                    ? loginMutation.error.message
-                    : "Failed to log in. Please try again."}
-                </AlertDescription>
-              </Alert>
-            </motion.div>
-          )}
+      <div className="max-w-6xl w-full mx-auto space-y-12">
+        {loginMutation.error && (
           <motion.div
-            className="text-center max-w-3xl mx-auto"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-md mx-auto"
           >
-            <motion.div
-              variants={itemVariants}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-400/20 via-orange-400/20 to-rose-400/20 border border-white/20 text-sm text-amber-900/80 dark:text-amber-100/80 backdrop-blur"
-            >
-              <Sun className="w-4 h-4" />
-              Step into your golden-hour space
-            </motion.div>
+            <Alert variant="destructive" className="glass-card border-rose-500/50 bg-rose-500/10 rounded-2xl">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="font-medium">
+                {loginMutation.error instanceof Error
+                  ? loginMutation.error.message
+                  : "Failed to log in. Please try again."}
+              </AlertDescription>
+            </Alert>
+          </motion.div>
+        )}
 
-            <motion.h1
-              variants={itemVariants}
-              className="mt-6 text-4xl md:text-5xl font-display font-bold tracking-tight text-balance"
-            >
-              Choose a Lumi companion to explore the experience
-            </motion.h1>
-
-            <motion.p
-              variants={itemVariants}
-              className="mt-4 text-lg text-muted-foreground"
-            >
-              Sign in instantly with one of our demo personas or continue as a guest to explore.
-            </motion.p>
-
-            <motion.div variants={itemVariants} className="mt-8">
-              <Button 
-                variant="outline" 
-                size="lg" 
-                className="gap-2 border-purple-500/50 hover:bg-purple-500/10"
-                onClick={() => loginAsGuest()}
-                data-testid="button-login-guest"
-              >
-                <UserCircle className="w-5 h-5" />
-                Continue as Guest
-              </Button>
-            </motion.div>
+        <motion.div
+          className="text-center space-y-6"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.div
+            variants={itemVariants}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-widest"
+          >
+            <Sun className="w-3.5 h-3.5" />
+            Enter Your Sanctuary
           </motion.div>
 
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="mt-12 grid gap-6 md:grid-cols-3"
+          <motion.h1
+            variants={itemVariants}
+            className="text-5xl md:text-6xl font-display font-bold tracking-tight text-balance"
           >
-            {isLoading && (
-              <motion.div variants={itemVariants} className="md:col-span-3 flex justify-center py-12">
-                <LoadingSpinner size="lg" variant="neural" />
-              </motion.div>
-            )}
+            Choose Your <span className="gradient-text">Reflection</span>
+          </motion.h1>
 
-            {!isLoading && !demoUsers?.length && (
-              <motion.div variants={itemVariants} className="md:col-span-3 py-12">
-                <Card className="p-8 text-center border-dashed border-white/10 bg-white/5">
-                  <AlertCircle className="w-10 h-10 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground mb-4">We couldn't load the demo companions.</p>
-                  <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ["/api/auth/demo-users"] })}>
-                    Try Again
-                  </Button>
-                </Card>
-              </motion.div>
-            )}
+          <motion.p
+            variants={itemVariants}
+            className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed font-medium"
+          >
+            Select a demo persona to explore SoulSync with pre-loaded history, 
+            or start fresh as a guest.
+          </motion.p>
 
-            {!isLoading && demoUsers?.map((user) => {
+          <motion.div variants={itemVariants} className="pt-4">
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="h-14 px-10 rounded-2xl border-white/10 bg-white/5 hover:bg-white/10 text-foreground font-bold shadow-xl"
+              onClick={() => loginAsGuest()}
+              data-testid="button-login-guest"
+            >
+              <UserCircle className="w-5 h-5 mr-3" />
+              Continue as Guest
+            </Button>
+          </motion.div>
+        </motion.div>
+
+        {/* Persona Cards Grid */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="grid gap-8 md:grid-cols-3"
+        >
+          {isLoading ? (
+            [...Array(3)].map((_, i) => (
+               <Card key={i} className="p-8 glass-card border-white/10 rounded-[2.5rem] space-y-6">
+                  <div className="flex items-center gap-4">
+                     <LoadingSkeleton className="w-16 h-16 rounded-full" />
+                     <div className="space-y-2 flex-1">
+                        <LoadingSkeleton className="h-4 w-1/2" />
+                        <LoadingSkeleton className="h-3 w-3/4" />
+                     </div>
+                  </div>
+                  <LoadingSkeleton className="h-12 w-full rounded-xl" />
+               </Card>
+            ))
+          ) : (
+            demoUsers?.map((user, index) => {
               const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ");
               return (
-                <motion.div key={user.id} variants={itemVariants}>
-                  <Card className="p-6 h-full flex flex-col justify-between glass-card border-white/20 shadow-lg">
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 flex items-center justify-center text-white font-semibold shadow-inner">
+                <motion.div 
+                  key={user.id} 
+                  variants={itemVariants}
+                  whileHover={{ y: -10 }}
+                  className="group"
+                >
+                  <Card className="p-8 h-full flex flex-col glass-card border-white/10 hover:border-primary/40 transition-all duration-500 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+                    {/* Background Visual Accent */}
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-[60px] group-hover:bg-primary/10 transition-colors" />
+                    
+                    <div className="space-y-6 flex-1 relative z-10">
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 rounded-[1.25rem] bg-gradient-to-br from-primary via-violet-600 to-indigo-600 flex items-center justify-center text-2xl text-white font-display font-bold shadow-xl ring-2 ring-white/10 group-hover:scale-110 transition-transform duration-500">
                           {fullName ? fullName.charAt(0) : "?"}
                         </div>
-                        <div className="text-left">
-                          <p className="font-semibold text-lg text-foreground/90">
-                            {fullName || "Unnamed"}
+                        <div className="space-y-1">
+                          <p className="font-display font-bold text-2xl group-hover:text-primary transition-colors">
+                            {user.firstName || "Unnamed"}
                           </p>
-                          <p className="text-sm text-muted-foreground">
-                            {user.email}
+                          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground/60">
+                            {user.email?.split('@')[0]}
                           </p>
                         </div>
                       </div>
 
-                      <p className="text-sm text-muted-foreground leading-relaxed">
-                        {user.tagline}
+                      <p className="text-muted-foreground leading-relaxed font-medium line-clamp-3">
+                        "{user.tagline}"
                       </p>
 
                       {user.mood && (
-                        <Badge variant="secondary" className="gap-1">
-                          <Sparkles className="w-3 h-3" />
-                          Current mood: {user.mood}
-                        </Badge>
+                        <div className="flex flex-wrap gap-2">
+                           <Badge className="bg-primary/10 text-primary border-none text-[10px] uppercase font-bold tracking-widest px-3 py-1.5 rounded-full">
+                             <Sparkles className="w-3 h-3 mr-2" />
+                             Base State: {user.mood}
+                           </Badge>
+                        </div>
                       )}
                     </div>
 
                     <Button
-                      className="mt-6 w-full gap-2"
-                      size="lg"
+                      className="mt-10 w-full h-14 rounded-2xl font-bold bg-white/5 hover:bg-primary text-foreground hover:text-white border border-white/10 hover:border-primary transition-all duration-300 shadow-xl group/btn"
                       disabled={loginMutation.isPending}
                       onClick={() => loginMutation.mutate(user.id)}
                       data-testid={`button-login-${user.id}`}
                     >
                       {loginMutation.isPending ? (
-                        <>
-                          <LoadingSpinner size="sm" variant="dots" />
-                          Signing in...
-                        </>
+                        <LoadingSpinner size="sm" variant="dots" />
                       ) : (
-                        <>
-                          Enter as {user.firstName}
-                          <ArrowRight className="w-4 h-4" />
-                        </>
+                        <span className="flex items-center gap-2">
+                          Enter Sanctuary
+                          <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                        </span>
                       )}
                     </Button>
                   </Card>
                 </motion.div>
               );
-            })}
-          </motion.div>
-        </div>
-      </section>
-    </AppShell>
+            })
+          )}
+        </motion.div>
+      </div>
+
+      {/* Decorative Footer Element */}
+      <div className="fixed bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+    </div>
   );
 }

@@ -20,20 +20,29 @@ export function AppShell({
   const { isAuthenticated } = useAuth();
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Animated neural background */}
+    <div className="min-h-screen bg-background relative overflow-hidden selection:bg-primary/20">
+      {/* Immersive Background Layers */}
       {showBackground && (
-        <NeuralBackground intensity="low" animated />
+        <div className="fixed inset-0 pointer-events-none z-0">
+          <NeuralBackground intensity="low" animated />
+          <div className="absolute inset-0 aurora-bg opacity-30 dark:opacity-20" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,hsl(var(--primary)/0.05),transparent_40%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,hsl(var(--accent)/0.05),transparent_40%)]" />
+        </div>
       )}
 
-      {/* Main content */}
+      {/* Main content with refined transitions */}
       <AnimatePresence mode="wait">
         <motion.main
-          className="relative z-10 pb-20 md:pb-0"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.3 }}
+          key={window.location.pathname}
+          className="relative z-10 pb-32 md:pb-8"
+          initial={{ opacity: 0, scale: 0.98, filter: "blur(10px)" }}
+          animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+          exit={{ opacity: 0, scale: 1.02, filter: "blur(10px)" }}
+          transition={{ 
+            duration: 0.5, 
+            ease: [0.16, 1, 0.3, 1] 
+          }}
         >
           {children}
         </motion.main>

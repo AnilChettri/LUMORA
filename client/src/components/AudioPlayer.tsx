@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { WaveformVisualizer } from '@/components/animations/WaveformVisualizer';
 import { cn } from '@/lib/utils';
+import { playAmbientSound, stopAmbientSound, setAmbientVolume, resumeAudioContext } from '@/lib/ambientAudio';
 import {
     Play,
     Pause,
@@ -24,6 +25,8 @@ export interface AudioTrack {
     imageUrl?: string;
     duration: number;
     licenseUrl?: string;
+    isLocal?: boolean;
+    isStream?: boolean;
 }
 
 interface AudioPlayerProps {
@@ -47,49 +50,82 @@ export function AudioPlayer({
     const [isMuted, setIsMuted] = useState(false);
 
     const currentTrack = tracks[currentTrackIndex];
+    const isLocalTrack = currentTrack?.isLocal;
+
+    // Handle local track playback
+    useEffect(() => {
+        if (isLocalTrack && isPlaying) {
+            resumeAudioContext();
+            playAmbientSound(currentTrack.id, isMuted ? 0 : volume / 100 * 0.5);
+        } else if (isLocalTrack && !isPlaying) {
+            stopAmbientSound();
+        }
+    }, [isPlaying, isLocalTrack, currentTrack, volume, isMuted]);
 
     // Update audio source when track changes
     useEffect(() => {
-        if (audioRef.current && currentTrack) {
+        if (audioRef.current && currentTrack && !isLocalTrack) {
             audioRef.current.src = currentTrack.audioUrl;
             audioRef.current.load();
 
             if (isPlaying) {
                 audioRef.current.play().catch(console.error);
             }
+        } else if (isLocalTrack) {
+            setDuration(currentTrack.duration);
+            if (isPlaying) {
+                playAmbientSound(currentTrack.id, isMuted ? 0 : volume / 100 * 0.5);
+            }
         }
-    }, [currentTrack, isPlaying]);
+    }, [currentTrack, isPlaying, isLocalTrack]);
 
     // Update volume
     useEffect(() => {
-        if (audioRef.current) {
+        if (audioRef.current && !isLocalTrack) {
             audioRef.current.volume = isMuted ? 0 : volume / 100;
+        } else if (isLocalTrack) {
+            setAmbientVolume(isMuted ? 0 : volume / 100 * 0.5);
         }
-    }, [volume, isMuted]);
+    }, [volume, isMuted, isLocalTrack]);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            stopAmbientSound();
+        };
+    }, []);
 
     const togglePlay = () => {
-        if (!audioRef.current) return;
-
-        if (isPlaying) {
-            audioRef.current.pause();
-        } else {
-            audioRef.current.play().catch(console.error);
+        if (isLocalTrack) {
+            setIsPlaying(!isPlaying);
+        } else if (audioRef.current) {
+            if (isPlaying) {
+                audioRef.current.pause();
+            } else {
+                audioRef.current.play().catch(console.error);
+            }
+            setIsPlaying(!isPlaying);
         }
-        setIsPlaying(!isPlaying);
     };
 
     const handleNext = () => {
+        if (isLocalTrack) {
+            stopAmbientSound();
+        }
         const nextIndex = (currentTrackIndex + 1) % tracks.length;
         onTrackChange(nextIndex);
     };
 
     const handlePrevious = () => {
+        if (isLocalTrack) {
+            stopAmbientSound();
+        }
         const prevIndex = currentTrackIndex === 0 ? tracks.length - 1 : currentTrackIndex - 1;
         onTrackChange(prevIndex);
     };
 
     const handleSeek = (value: number[]) => {
-        if (audioRef.current) {
+        if (!isLocalTrack && audioRef.current) {
             audioRef.current.currentTime = value[0];
             setCurrentTime(value[0]);
         }
@@ -100,6 +136,22 @@ export function AudioPlayer({
         const secs = Math.floor(seconds % 60);
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
+
+    // Handle simulated progress for local tracks (not for radio streams)
+    useEffect(() => {
+        if ((isLocalTrack || currentTrack?.isStream) && isPlaying && !currentTrack?.isStream) {
+            const interval = setInterval(() => {
+                setCurrentTime(prev => {
+                    if (prev >= duration) {
+                        handleNext();
+                        return 0;
+                    }
+                    return prev + 1;
+                });
+            }, 1000);
+            return () => clearInterval(interval);
+        }
+    }, [isLocalTrack, isPlaying, duration, currentTrack]);
 
     if (!currentTrack) return null;
 
@@ -112,14 +164,16 @@ export function AudioPlayer({
                 className
             )}
         >
-            <audio
-                ref={audioRef}
-                onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
-                onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
-                onEnded={handleNext}
-                onPlay={() => setIsPlaying(true)}
-                onPause={() => setIsPlaying(false)}
-            />
+            {!isLocalTrack && (
+                <audio
+                    ref={audioRef}
+                    onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+                    onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+                    onEnded={handleNext}
+                    onPlay={() => setIsPlaying(true)}
+                    onPause={() => setIsPlaying(false)}
+                />
+            )}
 
             <div className="max-w-7xl mx-auto p-4">
                 {/* Track Info */}
