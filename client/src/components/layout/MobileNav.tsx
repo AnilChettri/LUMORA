@@ -10,13 +10,14 @@ import {
   Users, 
   Mic, 
   PenLine,
-  Brain
+  Brain,
+  BarChart3
 } from "lucide-react";
 
 const navItems = [
   { path: "/", icon: Home, label: "Home" },
   { path: "/voice", icon: Mic, label: "Lumi" },
-  { path: "/mood", icon: Brain, label: "Mood" },
+  { path: "/analysis", icon: BarChart3, label: "Analysis" },
   { path: "/community", icon: Users, label: "Community" },
 ];
 

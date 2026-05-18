@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { runImmediateMoodPlan, getPlanPreviewForMood } from "@/lib/moodInterventions";
 import { Badge } from "@/components/ui/badge";
-import { Onboarding } from "@/components/Onboarding";
 import { LumiCharacter } from "@/components/animations/LumiCharacter";
 import { BrainVisualization } from "@/components/animations/BrainVisualization";
 import { LoadingSkeleton } from "@/components/animations/LoadingSpinner";
@@ -126,8 +125,7 @@ const itemVariants = {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { hasCompletedOnboarding, completeOnboarding } = useOnboarding();
-  const [showOnboarding, setShowOnboarding] = useState(!hasCompletedOnboarding);
+  const { hasCompletedOnboarding } = useOnboarding();
   const [, setLocation] = useLocation();
   const { session, hasIncompleteSession, endSession } = useSessionState();
   const [hasSpokenGreeting, setHasSpokenGreeting] = useState(false);
@@ -146,11 +144,6 @@ export default function Dashboard() {
   const currentMood = moodData?.mood || (user?.currentMood as MoodType) || "neutral";
   const greeting = getGreeting();
   const firstName = user?.firstName || "Friend";
-
-  const handleOnboardingComplete = () => {
-    setShowOnboarding(false);
-    completeOnboarding();
-  };
 
   const handleStartGuidedSession = () => {
     runImmediateMoodPlan(currentMood, setLocation);
@@ -199,8 +192,6 @@ export default function Dashboard() {
 
   return (
     <>
-      {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
-      
       {showResumePrompt && hasIncompleteSession && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -254,85 +245,87 @@ export default function Dashboard() {
           {/* Hero Welcome Section */}
           <motion.section
             variants={itemVariants}
-            className="mb-12"
+            className="mb-8"
           >
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-              <div className="space-y-2">
-                <motion.p 
-                  className="text-xs font-bold uppercase tracking-[0.4em] text-primary/80 dark:text-primary/60"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  {greeting}
-                </motion.p>
-                <h1 className="text-4xl md:text-5xl font-display font-bold tracking-tight text-foreground/90">
-                  Hi, <span className="gradient-text">{firstName}</span>
-                </h1>
-                <p className="text-muted-foreground text-fluid-p max-w-lg">
-                  Lumi is here to tune your space. How are you feeling today?
-                </p>
-              </div>
-              
-              <div className="flex items-center gap-4">
-                <div className="super-glass px-5 py-3 rounded-3xl flex items-center gap-3">
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">Current Mood</span>
-                    <span className={`text-sm font-bold mood-${currentMood}-text capitalize`}>{moodLabels[currentMood].label}</span>
-                  </div>
-                  <Badge
-                    className={`mood-${currentMood} w-10 h-10 rounded-2xl flex items-center justify-center p-0 shadow-lg border-none`}
+            <div className="bg-gradient-to-br from-white/60 via-white/40 to-white/20 dark:from-slate-900/60 dark:via-slate-800/40 dark:to-slate-900/20 backdrop-blur-xl rounded-[2.5rem] p-5 md:p-8 border border-white/20 dark:border-white/10 shadow-xl">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <div className="space-y-3 flex-1">
+                  <motion.p 
+                    className="text-xs font-bold uppercase tracking-[0.4em] text-primary/80 dark:text-primary/60"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 }}
                   >
-                    <img src="/Quantum Shift.jpg" alt="Mood" className="w-6 h-6 rounded-full object-cover" />
-                  </Badge>
+                    {greeting}
+                  </motion.p>
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold tracking-tight text-foreground/90">
+                    Hi, <span className="gradient-text">{firstName}</span>
+                  </h1>
+                  <p className="text-muted-foreground text-lg max-w-xl">
+                    Lumi is here to tune your space. How are you feeling today?
+                  </p>
+                </div>
+                
+                <div className="flex-shrink-0">
+                  <div className="super-glass px-5 py-3 rounded-3xl flex items-center gap-3 border border-white/20 dark:border-white/10">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">Current Mood</span>
+                      <span className={`text-sm font-bold mood-${currentMood}-text capitalize`}>{moodLabels[currentMood].label}</span>
+                    </div>
+                    <Badge
+                      className={`mood-${currentMood} w-10 h-10 rounded-2xl flex items-center justify-center p-0 shadow-lg border-none`}
+                    >
+                      <img src="/Quantum Shift.jpg" alt="Mood" className="w-6 h-6 rounded-full object-cover" />
+                    </Badge>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="mt-8 flex flex-wrap gap-4">
-              <Button
-                size="lg"
-                className="h-14 px-8 rounded-2xl text-base font-bold bg-primary text-primary-foreground shadow-[0_10px_30px_-10px_hsl(var(--primary)/0.5)] hover:scale-105 hover:shadow-[0_15px_35px_-10px_hsl(var(--primary)/0.6)] transition-all duration-300"
-                onClick={handleStartGuidedSession}
-              >
-                <BrainCircuit className="h-5 w-5 mr-3" />
-                Start Guided Session
-              </Button>
-              
-              <Link href="/voice">
+              <div className="mt-8 flex flex-col sm:flex-row flex-wrap gap-4">
                 <Button
-                  variant="outline"
                   size="lg"
-                  className="h-14 px-8 rounded-2xl border-2 border-primary/20 bg-primary/5 hover:bg-primary/10 hover:border-primary/30 transition-all duration-300"
+                  className="h-14 px-8 rounded-2xl text-base font-bold bg-primary text-primary-foreground shadow-[0_10px_30px_-10px_hsl(var(--primary)/0.5)] hover:scale-105 hover:shadow-[0_15px_35px_-10px_hsl(var(--primary)/0.6)] transition-all duration-300"
+                  onClick={handleStartGuidedSession}
                 >
-                  <MicVocal className="h-5 w-5 mr-3 text-primary" />
-                  Talk to Lumi
+                  <BrainCircuit className="h-5 w-5 mr-3" />
+                  Start Guided Session
                 </Button>
-              </Link>
+                
+                <Link href="/voice">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="h-14 px-8 rounded-2xl border-2 border-primary/20 bg-primary/5 hover:bg-primary/10 hover:border-primary/30 transition-all duration-300"
+                  >
+                    <MicVocal className="h-5 w-5 mr-3 text-primary" />
+                    Talk to Lumi
+                  </Button>
+                </Link>
+              </div>
             </div>
           </motion.section>
 
           {/* Featured Tools Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-10">
             {/* Quick Tools - Spans 4 cols */}
-            <motion.section variants={itemVariants} className="lg:col-span-4 h-full">
-              <div className="super-glass h-full rounded-[2.5rem] p-8 flex flex-col">
-                <div className="flex items-center justify-between mb-8">
+            <motion.section variants={itemVariants} className="lg:col-span-4">
+              <div className="super-glass rounded-[2.5rem] p-6 flex flex-col">
+                <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-bold font-display">Refuge</h2>
                   <Sparkle className="text-primary/40 h-5 w-5" />
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4 flex-1">
+                <div className="grid grid-cols-2 gap-3">
                   {quickTools.map((tool) => (
                     <Link key={tool.id} href={tool.path}>
                       <motion.div 
-                        className="group relative h-32 rounded-3xl overflow-hidden cursor-pointer"
-                        whileHover={{ y: -5 }}
+                        className="group relative h-24 rounded-2xl overflow-hidden cursor-pointer"
+                        whileHover={{ y: -3 }}
                       >
                         <div className="absolute inset-0 bg-primary/5 group-hover:bg-primary/10 transition-colors" />
-                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4 text-center">
-                          <div className="p-3 rounded-2xl bg-background/50 backdrop-blur-md group-hover:scale-110 transition-transform shadow-sm">
-                            <tool.icon className="h-5 w-5 text-primary" />
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-3 text-center">
+                          <div className="p-2.5 rounded-xl bg-background/50 backdrop-blur-md group-hover:scale-105 transition-transform shadow-sm">
+                            <tool.icon className="h-4 w-4 text-primary" />
                           </div>
                           <span className="text-xs font-bold">{tool.label}</span>
                         </div>
@@ -345,7 +338,7 @@ export default function Dashboard() {
 
             {/* Smart Recommendations - Spans 8 cols */}
             <motion.section variants={itemVariants} className="lg:col-span-8">
-              <div className="super-glass rounded-[2.5rem] p-8 h-full">
+              <div className="super-glass rounded-[2.5rem] p-6">
                 <SmartRecommendations mood={currentMood} timeOfDay={greeting} />
               </div>
             </motion.section>
@@ -358,9 +351,9 @@ export default function Dashboard() {
                 <h2 className="text-3xl font-bold font-display tracking-tight">Explore Spaces</h2>
                 <p className="text-muted-foreground mt-1">Choose your environment</p>
               </div>
-              <Link href="/spaces">
+              <Link href="/analysis">
                 <Button variant="ghost" className="rounded-full font-bold text-primary hover:text-primary hover:bg-primary/10">
-                  View All <ArrowUpRight className="ml-2 h-4 w-4" />
+                  View Metrics <ArrowUpRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
             </div>
@@ -398,8 +391,8 @@ export default function Dashboard() {
 
           {/* Trending Community - Modern List */}
           <motion.section variants={itemVariants}>
-            <div className="super-glass rounded-[3rem] p-10">
-              <div className="flex items-center justify-between mb-10">
+            <div className="super-glass rounded-[2.5rem] p-6">
+              <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-rose-500/10 flex items-center justify-center">
                     <TrendingUp className="h-6 w-6 text-rose-500" />

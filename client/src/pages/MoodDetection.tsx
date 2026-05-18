@@ -167,9 +167,9 @@ export default function MoodDetection() {
           }
           return 100;
         }
-        return prev + 2;
+        return prev + 0.5;
       });
-    }, 30);
+    }, 50);
 
     return () => clearInterval(interval);
   }, []);
@@ -297,19 +297,17 @@ export default function MoodDetection() {
                     className="w-full h-full object-cover grayscale opacity-60"
                   />
 
-                  {/* High-tech scanning overlay */}
+                  {/* Simplified scanning overlay */}
                   <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute inset-0 bg-primary/10 animate-pulse" />
-                    <div className="absolute top-0 left-0 right-0 h-[2px] bg-primary/60 shadow-[0_0_20px_hsl(var(--primary))] scan-line" />
+                    <div className="absolute inset-0 bg-primary/5" />
+                    <div className="absolute top-0 left-0 right-0 h-[3px] bg-primary/40 shadow-[0_0_15px_rgba(var(--primary-rgb),0.5)] animate-scan" />
                     
-                    <div className="absolute inset-10 border-2 border-primary/20 rounded-[2rem] flex items-center justify-center">
-                      <div className="w-40 h-40 border-2 border-primary/40 rounded-full flex items-center justify-center">
-                        <div className="w-20 h-20 border border-primary/60 rounded-full animate-ping" />
-                      </div>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-64 h-64 border border-primary/20 rounded-full animate-pulse" />
                     </div>
 
-                    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 super-glass px-6 py-2 rounded-full border-primary/30">
-                      <span className="text-xs font-bold uppercase tracking-widest text-primary animate-pulse">Neural Mapping In Progress</span>
+                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 glass-card px-4 py-1.5 rounded-full border-primary/20">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">Neural Analysis Active</span>
                     </div>
                   </div>
                 </div>

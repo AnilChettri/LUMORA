@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import type { Server } from "http";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { registerRoutes } from "./routes";
@@ -76,7 +77,7 @@ app.use((req, res, next) => {
 
 // registerRoutes returns the server, but we only need the app to be configured
 let routesRegistered = false;
-export async function setupApp(app: Express, server: Server) {
+export async function setupApp(app: ReturnType<typeof express>, server: Server) {
   if (routesRegistered) return;
   await registerRoutes(server, app);
   routesRegistered = true;

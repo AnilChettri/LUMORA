@@ -17,7 +17,6 @@ import Dashboard from "@/pages/Dashboard";
 import NotFound from "@/pages/not-found";
 
 // Lazy loaded pages (heavy or less frequently accessed)
-const MoodDetection = lazy(() => import("@/pages/MoodDetection"));
 const VoiceAgent = lazy(() => import("@/pages/VoiceAgent"));
 const Exercises = lazy(() => import("@/pages/Exercises"));
 const Community = lazy(() => import("@/pages/Community"));
@@ -26,6 +25,8 @@ const MusicSpace = lazy(() => import("@/pages/MusicSpace"));
 const BooksSpace = lazy(() => import("@/pages/BooksSpace"));
 const GamesSpace = lazy(() => import("@/pages/GamesSpace"));
 const Crisis = lazy(() => import("@/pages/Crisis"));
+const Onboarding = lazy(() => import("@/pages/Onboarding"));
+const Analysis = lazy(() => import("@/pages/Analysis"));
 
 function AuthenticatedRoutes() {
   return (
@@ -40,20 +41,10 @@ function AuthenticatedRoutes() {
           </div>
         }>
           <Switch>
+            <Route path="/onboarding" component={Onboarding} />
             <Route path="/" component={Dashboard} />
 
-            {/* Critical features with dedicated error boundaries */}
-            <Route path="/mood">
-              {() => (
-                <ErrorBoundary
-                  fallbackMessage="We couldn't load the mood detection feature. Please try again."
-                  onReset={() => window.location.reload()}
-                >
-                  <MoodDetection />
-                </ErrorBoundary>
-              )}
-            </Route>
-
+            {/* Voice Agent */}
             <Route path="/voice">
               {() => (
                 <ErrorBoundary
@@ -72,6 +63,7 @@ function AuthenticatedRoutes() {
             <Route path="/books" component={BooksSpace} />
             <Route path="/games" component={GamesSpace} />
             <Route path="/crisis" component={Crisis} />
+            <Route path="/analysis" component={Analysis} />
             
             {/* Redirect /login to / for authenticated users */}
             <Route path="/login">

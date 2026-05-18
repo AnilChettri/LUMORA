@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLocation } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/layout/Header";
 import { LumiCharacter } from "@/components/animations/LumiCharacter";
@@ -9,20 +10,22 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { speakText } from "@/lib/aiMocks";
+import { useOnboarding } from "@/hooks/useOnboarding";
+import { SpaceTour } from "@/components/SpaceTour";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
+import type { MoodType } from "@shared/schema";
 import {
   Mic,
   MicOff,
   Send,
-  Keyboard,
   Volume2,
   VolumeX,
   Sparkles,
   Clock,
+  ArrowRight,
+  X,
 } from "lucide-react";
 
 interface Message {
@@ -32,152 +35,172 @@ interface Message {
   timestamp: Date;
 }
 
-const SESSION_DURATION = 180; // 3 minutes
-
-const suggestedPrompts = [
-  "I'm feeling anxious today",
-  "How are you?",
-  "I need motivation",
-  "Let's do a breathing exercise",
-  "What's been on my mind",
-  "I want to talk",
-];
+const SESSION_DURATION = 180;
+const SKIP_PROMPT_TIME = 20;
 
 export default function VoiceAgent() {
   const { toast } = useToast();
+  const [location, setLocation] = useLocation();
+  const { completeOnboarding } = useOnboarding();
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<any>(null);
+
+  const params = new URLSearchParams(location?.split("?")[1] || "");
+  const isOnboarding = params.get("onboarding") === "true";
+  const initialMoodParam = params.get("initialMood");
+
+  const [showSpaceTour, setShowSpaceTour] = useState(false);
+  const [initialMood, setInitialMood] = useState<string>(initialMoodParam || "neutral");
+  const [verifiedMood, setVerifiedMood] = useState<string>(initialMoodParam || "neutral");
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [inputText, setInputText] = useState("");
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [showKeyboard, setShowKeyboard] = useState(false);
   const [lumiMood, setLumiMood] = useState<"calm" | "listening" | "thinking" | "happy">("calm");
-  
-  // Session state
   const [sessionActive, setSessionActive] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(SESSION_DURATION);
-  const [conversationStage, setConversationStage] = useState<'opening' | 'exploring' | 'activity' | 'closing'>('opening');
+  const [showEndPopup, setShowEndPopup] = useState(false);
+  const [skipPromptShown, setSkipPromptShown] = useState(false);
+  const [conversationEnded, setConversationEnded] = useState(false);
 
-  // Get current mood
   const { data: moodData } = useQuery<{ mood: string; confidence: number }>({
     queryKey: ["/api/mood/current"],
     retry: true,
   });
 
-  const currentMood = moodData?.mood || 'neutral';
+  const currentMood = moodData?.mood || initialMood;
 
-  // Session timer
+  useEffect(() => {
+    if (moodData?.mood) {
+      setInitialMood(moodData.mood);
+    }
+  }, [moodData]);
+
   useEffect(() => {
     if (!sessionActive || timeRemaining <= 0) return;
-    
+
     const timer = setInterval(() => {
       setTimeRemaining(prev => {
-        if (prev <= 1) {
+        const newTime = prev - 1;
+        if (newTime <= 0) {
           endSession();
           return 0;
         }
-        return prev - 1;
+        return newTime;
       });
     }, 1000);
 
     return () => clearInterval(timer);
   }, [sessionActive, timeRemaining]);
 
-  // Update conversation stage based on time
   useEffect(() => {
-    if (sessionActive) {
-      if (timeRemaining > 120) {
-        setConversationStage('opening');
-      } else if (timeRemaining > 60) {
-        setConversationStage('exploring');
-      } else if (timeRemaining > 30) {
-        setConversationStage('activity');
-      } else {
-        setConversationStage('closing');
-      }
-    }
-  }, [timeRemaining, sessionActive]);
+    if (!sessionActive || conversationEnded || skipPromptShown) return;
 
-  const endSession = useCallback(() => {
-    setSessionActive(false);
-    const closingMsg: Message = {
-      id: Date.now().toString(),
-      role: "assistant",
-      content: "Our time is almost up. Remember, I'm always here when you need me. Take care of yourself!",
-      timestamp: new Date(),
+    const elapsed = SESSION_DURATION - timeRemaining;
+
+    if (elapsed >= SKIP_PROMPT_TIME && timeRemaining > 0) {
+      setSkipPromptShown(true);
+      setShowEndPopup(true);
+    }
+  }, [timeRemaining, sessionActive, conversationEnded, skipPromptShown]);
+
+  const speak = useCallback((text: string, callback?: () => void) => {
+    if (!('speechSynthesis' in window)) {
+      if (callback) callback();
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.95;
+    utterance.pitch = 1.05;
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      if (callback) callback();
     };
-    setMessages(prev => [...prev, closingMsg]);
-    speakText(closingMsg.content, 0.9);
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+      if (callback) callback();
+    };
+
+    setTimeout(() => window.speechSynthesis.speak(utterance), 50);
+  }, []);
+
+  const stopSpeaking = useCallback(() => {
+    window.speechSynthesis?.cancel();
+    setIsSpeaking(false);
+  }, []);
+
+  const startListening = useCallback(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast({ title: "Speech not supported", description: "Use keyboard instead" });
+      return;
+    }
+
+    setIsListening(true);
+    setLumiMood("listening");
+    const recognition = new SpeechRecognition();
+    recognitionRef.current = recognition;
+
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    let finalTranscript = '';
+
+    recognition.onresult = (event: any) => {
+      finalTranscript = Array.from(event.results)
+        .map((result: any) => result[0].transcript)
+        .join('');
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      if (finalTranscript.trim()) {
+        sendMessage(finalTranscript);
+      } else {
+        setLumiMood("calm");
+        speak("I didn't catch that. Could you try again?");
+        setTimeout(() => startListening(), 100);
+      }
+    };
+
+    recognition.onerror = () => {
+      setIsListening(false);
+      setLumiMood("calm");
+    };
+
+    recognition.start();
+  }, [speak, toast]);
+
+  const stopListening = useCallback(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+    setIsListening(false);
     setLumiMood("calm");
   }, []);
 
-  const getContextualResponse = useCallback((userMessage: string): string => {
-    const lowerMessage = userMessage.toLowerCase();
-    const mood = currentMood;
-    
-    // Opening stage - first minute
-    if (conversationStage === 'opening') {
-      const moodGreetings: Record<string, string[]> = {
-        happy: ["It's great to see you feeling good! What's been the highlight of your day?", "I love your energy! What's putting that smile on your face?", "You seem happy! Tell me more about what's going well."],
-        sad: ["I can sense something's weighing on you. Want to share what's going on?", "I'm here with you. Take your time - what's on your mind?", "It's okay to feel how you're feeling. What's happening?"],
-        anxious: ["I notice you might be feeling on edge. Let's take it easy. What's worrying you?", "I'm here to help you feel more calm. What's been on your mind?", "Take a breath with me. What's making you feel overwhelmed?"],
-        stressed: ["You've got a lot on your plate. Let's talk through it. What's been toughest?", "I can hear the pressure you're under. What's been most stressful?", "Let's take a moment together. What's been most challenging?"],
-        tired: ["You seem low on energy. Let's take things gently. What's been draining you?", "I notice you're feeling tired. Have you been getting enough rest?", "Let's take it easy today. What's been zapping your energy?"],
-        neutral: ["How are you really feeling? Take a moment to check in with yourself.", "What's been on your mind lately? How's everything going?", "What's happening in your world? How are you feeling?"],
-      };
-      
-      const responses = moodGreetings[mood] || moodGreetings.neutral;
-      return responses[Math.floor(Math.random() * responses.length)];
-    }
-    
-    // Exploring stage - second minute
-    if (conversationStage === 'exploring') {
-      if (lowerMessage.includes('work') || lowerMessage.includes('job')) {
-        return ["That's important. How does that make you feel? Any wins recently?", "Work can be so challenging. What's one thing that's been going well?", "I hear you. Remember to take breaks - your mental health matters."][Math.floor(Math.random() * 3)];
-      }
-      if (lowerMessage.includes('family') || lowerMessage.includes('relationship') || lowerMessage.includes('friend')) {
-        return ["Connection is so important. How are your closest relationships right now?", "Relationships can be complex. What's been most meaningful lately?", "It's okay to set boundaries. How are you navigating that?"][Math.floor(Math.random() * 3)];
-      }
-      
-      const followUps: Record<string, string[]> = {
-        happy: ["That's wonderful! What made that possible for you?", "I love hearing that! What's been the best part?", "That's really great. How can you create more of that?"],
-        sad: ["I'm here for you. What would help you feel a bit better right now?", "You don't have to carry this alone. What's usually help when you're down?", "Let's find some light together. What do you need?"],
-        anxious: ["That makes sense. Would you like to try something that might help?", "I understand. How about we do some breathing together?", "What's one thing you can control right now?"],
-        stressed: ["That's a lot to handle. What's one thing you can let go of for now?", "You deserve a break. What helps you decompress?", "Let's prioritize - what's truly urgent?"],
-        neutral: ["What matters most to you right now? What are you working toward?", "How are you taking care of yourself?", "What's one thing you'd like to improve?"],
-      };
-      
-      return (followUps[mood] || followUps.neutral)[Math.floor(Math.random() * 3)];
-    }
-    
-    // Activity stage - third minute
-    if (conversationStage === 'activity') {
-      const activityPrompts: Record<string, string[]> = {
-        sad: ["Would you like to try a gentle grounding exercise together?", "How about we do some breathing? It can really help.", "Want to try something that might help? I can guide you."],
-        anxious: ["Let's do some calming breath together. Want to try the 4-7-8?", "I think some gentle movement might help. A quick stretch?", "Would you like me to put on some calming music?"],
-        stressed: ["Let's release some tension. Want to try a quick body scan?", "I think a quick break would help. Breathing together?", "Would you like to try a light game to take your mind off things?"],
-        neutral: ["What's something you'd like to do right now? Exercise, music, or keep chatting?", "How would you like to spend our remaining time?", "What would be most helpful for you?"],
-      };
-      
-      return (activityPrompts[mood] || activityPrompts.neutral)[Math.floor(Math.random() * 3)];
-    }
-    
-    // Closing
-    const closings = [
-      "Before we wrap up - remember, taking care of your mental health is a journey. Be patient with yourself.",
-      "Thank you for sharing with me. You're doing better than you think. Keep checking in.",
-      "It's okay to have difficult feelings - they're part of being human. You're doing great.",
-      "I appreciate you opening up today. You're stronger than you know. Take care!",
-    ];
-    return closings[Math.floor(Math.random() * closings.length)];
-  }, [currentMood, conversationStage]);
+  const sendMessage = useCallback((text: string) => {
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content: text,
+      timestamp: new Date(),
+    };
+    setMessages(prev => [...prev, userMessage]);
+    setLumiMood("thinking");
+
+    chatMutation.mutate(text);
+  }, []);
 
   const chatMutation = useMutation({
     mutationFn: async (message: string) => {
-      // Use the server API for smarter responses
       const response = await apiRequest("POST", "/api/voice-agent", {
         message,
         currentMood,
@@ -186,7 +209,7 @@ export default function VoiceAgent() {
     },
     onSuccess: (data) => {
       const assistantMessage: Message = {
-        id: Date.now().toString(),
+        id: (Date.now() + 1).toString(),
         role: "assistant",
         content: data.response,
         timestamp: new Date(),
@@ -195,142 +218,105 @@ export default function VoiceAgent() {
       setLumiMood("happy");
       setTimeout(() => setLumiMood("calm"), 2000);
 
-      // Speak the response using Web Speech API
-      if ('speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(data.response);
-        utterance.rate = 0.9;
-        utterance.pitch = 1.1;
-        utterance.onstart = () => setIsSpeaking(true);
-        utterance.onend = () => setIsSpeaking(false);
-        window.speechSynthesis.cancel(); // Cancel any ongoing speech
-        window.speechSynthesis.speak(utterance); // Enabled TTS
-      }
+      speak(data.response, () => {
+        if (!conversationEnded) {
+          setTimeout(() => startListening(), 500);
+        }
+      });
     },
     onError: () => {
       const errorMessage: Message = {
-        id: Date.now().toString(),
+        id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: "I'm sorry, I couldn't process that right now. Could you try again? Remember, I'm always here for you.",
+        content: "I'm having trouble understanding. Could you try again?",
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, errorMessage]);
-      setLumiMood("calm");
+      speak("I'm having trouble understanding. Could you try again?", () => {
+        if (!conversationEnded) {
+          setTimeout(() => startListening(), 500);
+        }
+      });
     },
   });
 
   const handleSend = useCallback(() => {
-    const text = inputText.trim();
-    if (!text || chatMutation.isPending) return;
+    if (!inputText.trim() || chatMutation.isPending) return;
+    if (recognitionRef.current) recognitionRef.current.abort();
+    sendMessage(inputText.trim());
+    setInputText("");
+  }, [inputText, chatMutation.isPending, sendMessage]);
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: text,
+  const endSession = useCallback(() => {
+    if (conversationEnded) return;
+    setConversationEnded(true);
+    setSessionActive(false);
+    stopSpeaking();
+
+    const userMessages = messages.filter(m => m.role === "user").map(m => m.content.toLowerCase());
+    let analyzedMood: MoodType = currentMood as MoodType;
+
+    if (userMessages.some(m => m.includes("happy") || m.includes("good") || m.includes("great"))) {
+      analyzedMood = "happy";
+    } else if (userMessages.some(m => m.includes("sad") || m.includes("down") || m.includes("bad"))) {
+      analyzedMood = "sad";
+    } else if (userMessages.some(m => m.includes("anxious") || m.includes("worried") || m.includes("nervous"))) {
+      analyzedMood = "anxious";
+    } else if (userMessages.some(m => m.includes("tired") || m.includes("exhausted"))) {
+      analyzedMood = "tired";
+    } else if (userMessages.some(m => m.includes("stress") || m.includes("overwhelm"))) {
+      analyzedMood = "stressed";
+    }
+
+    setVerifiedMood(analyzedMood);
+
+    apiRequest("POST", "/api/mood", { mood: analyzedMood, confidence: 85, source: "voice-agent" })
+      .then(() => queryClient.invalidateQueries({ queryKey: ["/api/mood/current"] }));
+
+    const goodbyeMsg = "Our session is complete. It was wonderful talking with you. Now let me guide you through some wellness spaces designed for your mood. Take care of yourself!";
+    const agentMessage: Message = {
+      id: (Date.now() + 2).toString(),
+      role: "assistant",
+      content: goodbyeMsg,
       timestamp: new Date(),
     };
-    setMessages(prev => [...prev, userMessage]);
-    setInputText("");
-    setLumiMood("thinking");
-    chatMutation.mutate(text);
-  }, [inputText, chatMutation]);
+    setMessages(prev => [...prev, agentMessage]);
 
-  const handlePromptClick = (prompt: string) => {
-    setInputText(prompt);
-    setTimeout(() => {
-      const userMessage: Message = {
-        id: Date.now().toString(),
-        role: "user",
-        content: prompt,
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, userMessage]);
-      setLumiMood("thinking");
-      chatMutation.mutate(prompt);
-    }, 100);
+    speak(goodbyeMsg, () => {
+      setTimeout(() => {
+        if (isOnboarding) {
+          completeOnboarding();
+        }
+        setShowSpaceTour(true);
+      }, 1500);
+    });
+  }, [messages, currentMood, isOnboarding, completeOnboarding, speak, stopSpeaking, setLocation, conversationEnded]);
+
+  const handleContinue = () => {
+    setShowEndPopup(false);
+    speak("Let's continue our conversation. Tell me more about how you're feeling.", () => {
+      setTimeout(() => startListening(), 500);
+    });
   };
 
-  const toggleListening = useCallback(() => {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      toast({
-        title: "Speech recognition not available",
-        description: "Try typing your message instead.",
-        variant: "destructive",
-      });
-      setShowKeyboard(true);
-      return;
-    }
+  const handleEndNow = () => {
+    setShowEndPopup(false);
+    endSession();
+  };
 
-    if (isListening) {
-      setIsListening(false);
-      setLumiMood("calm");
-      return;
-    }
-
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-
-    recognition.continuous = false;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-
-    recognition.onstart = () => {
-      setIsListening(true);
-      setLumiMood("listening");
-    };
-
-    recognition.onresult = (event: any) => {
-      const transcript = Array.from(event.results)
-        .map((result: any) => result[0].transcript)
-        .join('');
-      setInputText(transcript);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-      if (inputText.trim()) {
-        handleSend();
-      } else {
-        setLumiMood("calm");
-      }
-    };
-
-    recognition.onerror = () => {
-      setIsListening(false);
-      setLumiMood("calm");
-      toast({
-        title: "Couldn't hear you",
-        description: "Please try speaking again or use the keyboard.",
-      });
-    };
-
-    recognition.start();
-  }, [isListening, inputText, handleSend, toast]);
-
-  // Auto-scroll to bottom on new messages
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
 
-  // Initialize with greeting and start session
   useEffect(() => {
-    if (!hasInitialized) {
-      // Start the 3-minute session
+    if (!hasInitialized && currentMood) {
       setSessionActive(true);
       setTimeRemaining(SESSION_DURATION);
-      
-      const moodIntros: Record<string, string> = {
-        happy: "It's wonderful to see you! What's been the highlight of your day?",
-        sad: "I'm here for you. Take your time - what's on your mind?",
-        anxious: "I can sense you might be feeling on edge. Let's take it easy - what's going on?",
-        stressed: "You've got a lot on your plate. Let's talk through it together. What's been toughest?",
-        tired: "You seem low on energy. Let's take things gently. What's been happening?",
-        neutral: "Hi there! I'm Lumi. How are you feeling right now? What's been on your mind?",
-      };
-      
-      const greeting = moodIntros[currentMood as keyof typeof moodIntros] || moodIntros.neutral;
-      
+
+      const greeting = `Hi there! I'm Lumi. I detected you're feeling ${currentMood}. Let's have a meaningful conversation. Tell me, what's been on your mind lately?`;
+
       setMessages([{
         id: "welcome",
         role: "assistant",
@@ -338,33 +324,42 @@ export default function VoiceAgent() {
         timestamp: new Date(),
       }]);
 
-      // Speak the greeting
-      const ttsConsent = localStorage.getItem('tts-auto-play-consent');
-      if (ttsConsent === 'true' && 'speechSynthesis' in window) {
-        setTimeout(() => {
-          speakText(greeting, 0.9);
-          setIsSpeaking(true);
-        }, 500);
-      }
-
       setHasInitialized(true);
+
+      speak(greeting, () => {
+        setTimeout(() => startListening(), 800);
+      });
+
+      navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => {
+        toast({ title: "Microphone access recommended", description: "Enable mic for voice chat" });
+      });
     }
-  }, [hasInitialized, currentMood]);
+  }, [hasInitialized, currentMood, speak, startListening, toast]);
+
+  if (showSpaceTour) {
+    return (
+      <SpaceTour
+        key={`tour-${Date.now()}`}
+        initialMood={initialMood}
+        verifiedMood={verifiedMood}
+        onComplete={() => {
+          setShowSpaceTour(false);
+          setLocation("/");
+        }}
+      />
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
 
-      <div className="flex-1 flex flex-col lg:flex-row max-w-7xl mx-auto w-full gap-8 p-4 md:p-8">
-        {/* Lumi Visualization Area - Left Column */}
+      <div className="flex-1 flex flex-col max-w-7xl mx-auto w-full gap-8 p-4 md:p-8">
         <motion.div
-          className="flex-1 flex flex-col items-center justify-center super-glass rounded-[3rem] p-10 border-white/20 shadow-2xl relative overflow-hidden"
+          className="flex-1 flex flex-col items-center justify-center super-glass rounded-[3rem] p-10 border-white/20 shadow-2xl relative"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-primary/5 pointer-events-none" />
-          
-          {/* Session Status Overlay */}
           {sessionActive && (
             <div className="absolute top-8 left-8 right-8 flex items-center justify-between">
               <div className="flex items-center gap-3 bg-white/10 backdrop-blur-xl rounded-2xl px-5 py-2.5 border border-white/10">
@@ -384,97 +379,71 @@ export default function VoiceAgent() {
             <div className="scale-125 mb-12">
               <LumiCharacter size="lg" mood={lumiMood} />
             </div>
-            
-            <div className="space-y-6 text-center">
-              <WaveformVisualizer
-                isActive={isListening || isSpeaking}
-                className="scale-150"
-                variant="default"
-              />
-              <motion.div
-                key={isListening ? "listen" : isSpeaking ? "speak" : "idle"}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="px-6 py-2 rounded-full bg-primary/10 text-primary font-bold uppercase tracking-widest text-xs"
-              >
-                {isListening ? "I'm listening..." : isSpeaking ? "Lumi is speaking" : "Ready to chat"}
-              </motion.div>
-            </div>
+
+            <WaveformVisualizer
+              isActive={isListening || isSpeaking}
+              className="scale-150"
+              variant="default"
+            />
+
+            <motion.div
+              key={isListening ? "listen" : isSpeaking ? "speak" : "idle"}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-6 px-6 py-2 rounded-full bg-primary/10 text-primary font-bold uppercase tracking-widest text-xs"
+            >
+              {isListening ? "I'm listening..." : isSpeaking ? "Speaking..." : "Ready"}
+            </motion.div>
           </div>
 
-          {/* Session Progress Bottom */}
-          <div className="absolute bottom-8 left-8 right-8 space-y-3">
-             <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest opacity-60">
-                <span>{conversationStage}</span>
-                <span>{Math.round(((SESSION_DURATION - timeRemaining) / SESSION_DURATION) * 100)}%</span>
-             </div>
-             <div className="h-1.5 rounded-full bg-white/5 overflow-hidden border border-white/5">
-                <motion.div 
-                  className="h-full bg-primary shadow-[0_0_15px_hsl(var(--primary))]"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${((SESSION_DURATION - timeRemaining) / SESSION_DURATION) * 100}%` }}
-                />
-             </div>
+          <div className="absolute bottom-8 left-8 right-8">
+            <div className="h-1.5 rounded-full bg-white/5 overflow-hidden border border-white/5">
+              <motion.div
+                className="h-full bg-primary"
+                animate={{ width: `${((SESSION_DURATION - timeRemaining) / SESSION_DURATION) * 100}%` }}
+              />
+            </div>
           </div>
         </motion.div>
 
-        {/* Chat Messages Area - Right Column */}
         <div className="flex-[1.5] flex flex-col super-glass rounded-[3rem] border-white/20 shadow-2xl overflow-hidden">
           <div className="p-6 border-b border-white/10 bg-white/5 backdrop-blur-md flex items-center justify-between">
             <h2 className="font-display font-bold text-xl flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" />
-              Conversation
+              Conversation with Lumi
             </h2>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="rounded-full hover:bg-rose-500/10 hover:text-rose-500" onClick={endSession}>
-                <MicOff className="w-4 h-4" />
-              </Button>
-            </div>
+            <Button variant="ghost" size="icon" className="rounded-full hover:bg-rose-500/10 hover:text-rose-500" onClick={endSession}>
+              <MicOff className="w-4 h-4" />
+            </Button>
           </div>
 
-          <ScrollArea
-            ref={scrollRef}
-            className="flex-1 p-6"
-          >
+          <ScrollArea ref={scrollRef} className="flex-1 p-6">
             <div className="space-y-6">
-              <AnimatePresence initial={false}>
-                {messages.map((message) => (
-                  <motion.div
-                    key={message.id}
-                    initial={{ opacity: 0, x: message.role === "user" ? 20 : -20 }}
-                    animate={{ opacity: 1, x: 0 }}
+              {messages.map((message) => (
+                <motion.div
+                  key={message.id}
+                  initial={{ opacity: 0, x: message.role === "user" ? 20 : -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className={cn("flex", message.role === "user" ? "justify-end" : "justify-start")}
+                >
+                  <div
                     className={cn(
-                      "flex",
-                      message.role === "user" ? "justify-end" : "justify-start"
+                      "max-w-[80%] rounded-[2rem] px-6 py-4 shadow-lg",
+                      message.role === "user"
+                        ? "bg-primary text-primary-foreground rounded-tr-md"
+                        : "glass-card border-white/10 rounded-tl-md"
                     )}
                   >
-                    <div
-                      className={cn(
-                        "max-w-[80%] rounded-[2rem] px-6 py-4 shadow-lg transition-all",
-                        message.role === "user"
-                          ? "bg-primary text-primary-foreground rounded-tr-md"
-                          : "glass-card border-white/10 rounded-tl-md text-foreground"
-                      )}
-                      data-testid={`message-${message.role}-${message.id}`}
-                    >
-                      <p className="text-base leading-relaxed">{message.content}</p>
-                      <p className={cn(
-                        "text-[10px] font-bold uppercase tracking-widest mt-2 opacity-50",
-                        message.role === "user" ? "text-right" : "text-left"
-                      )}>
-                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+                    <p className="text-base leading-relaxed">{message.content}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest mt-2 opacity-50">
+                      {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
 
               {chatMutation.isPending && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="flex justify-start"
-                >
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
                   <div className="glass-card rounded-[2rem] rounded-tl-md px-6 py-4 border-white/10">
                     <LoadingSpinner variant="dots" size="sm" />
                   </div>
@@ -483,46 +452,25 @@ export default function VoiceAgent() {
             </div>
           </ScrollArea>
 
-          {/* Interaction Area */}
           <div className="p-8 border-t border-white/10 bg-white/5 backdrop-blur-xl">
-            {/* Suggested Prompts */}
-            {messages.length <= 2 && !showKeyboard && (
-              <motion.div
-                className="mb-6 flex flex-wrap gap-2"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                {suggestedPrompts.slice(0, 4).map((prompt) => (
-                  <Button
-                    key={prompt}
-                    variant="outline"
-                    className="rounded-full border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all text-xs font-bold"
-                    onClick={() => handlePromptClick(prompt)}
-                  >
-                    {prompt}
-                  </Button>
-                ))}
-              </motion.div>
-            )}
-
             <div className="flex items-center gap-4">
               <div className="flex-1 relative">
                 <Input
                   ref={inputRef}
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
-                  placeholder={isListening ? "Lumi is listening..." : "Type your message..."}
                   onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                  className="h-16 rounded-2xl border-none bg-primary/5 focus-visible:ring-primary text-lg px-6"
+                  placeholder={isListening ? "Listening..." : "Type your message..."}
+                  className="h-16 rounded-2xl border-none bg-primary/5 text-lg px-6"
                 />
                 <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                   <Button
                     size="icon"
                     variant="ghost"
                     className={cn("h-12 w-12 rounded-xl transition-all", isListening && "text-rose-500 bg-rose-500/10")}
-                    onClick={toggleListening}
+                    onClick={isListening ? stopListening : startListening}
                   >
-                    <Mic className="w-5 h-5" />
+                    {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
                   </Button>
                   <Button
                     size="icon"
@@ -535,28 +483,70 @@ export default function VoiceAgent() {
                   </Button>
                 </div>
               </div>
-              
+
               <Button
                 variant="outline"
                 size="icon"
-                className="h-16 w-16 rounded-2xl border-white/10 bg-white/5 hover:bg-white/10"
-                onClick={() => {
-                  if (isSpeaking) {
-                    window.speechSynthesis?.cancel();
-                    setIsSpeaking(false);
-                  }
-                }}
+                className="h-16 w-16 rounded-2xl"
+                onClick={() => isSpeaking ? stopSpeaking() : (() => {
+                  const lastMsg = [...messages].reverse().find(m => m.role === 'assistant');
+                  if (lastMsg) speak(lastMsg.content);
+                })()}
               >
-                {isSpeaking ? (
-                  <VolumeX className="w-6 h-6 text-rose-500" />
-                ) : (
-                  <Volume2 className="w-6 h-6 text-primary" />
-                )}
+                {isSpeaking ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
               </Button>
             </div>
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {showEndPopup && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+            >
+              <Card className="bg-slate-900 border-purple-500/30 rounded-3xl p-8 max-w-md mx-4">
+                <div className="flex items-center justify-between mb-6">
+                  <LumiCharacter size="md" mood="listening" />
+                  <Button variant="ghost" size="icon" onClick={handleContinue}>
+                    <X className="w-5 h-5" />
+                  </Button>
+                </div>
+                <h3 className="text-2xl font-bold text-white text-center mb-4">
+                  Skip Voice Agent?
+                </h3>
+                <p className="text-white/60 text-center mb-8">
+                  You've been chatting for 20 seconds. Would you like to skip the voice agent and go directly to the wellness spaces?
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Button
+                    onClick={handleEndNow}
+                    variant="outline"
+                    className="flex-1 h-12 rounded-xl border-white/20 text-white/70 font-bold"
+                  >
+                    Skip Voice Agent
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                  <Button
+                    onClick={handleContinue}
+                    className="flex-1 h-12 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold"
+                  >
+                    Continue Chat
+                  </Button>
+                </div>
+              </Card>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

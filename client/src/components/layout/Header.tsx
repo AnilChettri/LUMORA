@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
-import { Brain, LogOut, Settings, User, Home, Mic, Users } from "lucide-react";
+import { Brain, LogOut, Settings, User, Home, Mic, Users, BarChart3 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
@@ -18,8 +18,8 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { path: "/", icon: Home, label: "Home" },
   { path: "/voice", icon: Mic, label: "Lumi" },
-  { path: "/mood", icon: Brain, label: "Mood" },
   { path: "/community", icon: Users, label: "Community" },
+  { path: "/analysis", icon: BarChart3, label: "Analysis" },
 ];
 
 export function Header() {

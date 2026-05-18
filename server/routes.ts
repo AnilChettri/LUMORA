@@ -327,5 +327,30 @@ export async function registerRoutes(
     res.json({ remainingTime });
   });
 
+  // === ANALYSIS ROUTES ===
+
+  // Get user metrics
+  app.get("/api/analysis/metrics", ensureAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const moodLogs = await storage.getMoodLogs(userId);
+      const journals = await storage.getJournals(userId);
+
+      const totalSessions = moodLogs.filter(m => m.source === "voice-agent").length;
+      const activitiesCompleted = journals.length;
+
+      res.json({
+        totalSessions,
+        totalTime: totalSessions * 3,
+        spacesVisited: ["music", "exercises", "journal", "books", "games", "community"],
+        activitiesCompleted,
+        moodShift: moodLogs.slice(0, 10).map(m => ({ from: "neutral", to: m.mood })),
+      });
+    } catch (error) {
+      console.error("Error fetching metrics:", error);
+      res.status(500).json({ message: "Failed to fetch metrics" });
+    }
+  });
+
   return httpServer;
 }

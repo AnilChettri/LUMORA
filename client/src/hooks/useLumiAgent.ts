@@ -72,11 +72,16 @@ export function useLumiAgent(): UseLumiAgentReturn {
       synthRef.current.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = Math.max(0.5, Math.min(2, rate));
-      utterance.pitch = 1;
-      utterance.volume = 0.8;
+      utterance.pitch = 1.05;
+      utterance.volume = 0.9;
       utterance.onstart = () => setIsSpeaking(true);
       utterance.onend = () => setIsSpeaking(false);
-      synthRef.current.speak(utterance);
+      utterance.onerror = () => setIsSpeaking(false);
+      
+      // Delay slightly to ensure previous cancel finishes
+      setTimeout(() => {
+        synthRef.current?.speak(utterance);
+      }, 50);
     }
   }, []);
 

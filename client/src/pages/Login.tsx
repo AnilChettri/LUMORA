@@ -68,7 +68,7 @@ export default function Login() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      setLocation("/mood");
+      setLocation("/onboarding");
     },
     onError: (error) => {
       console.error("Login error:", error);

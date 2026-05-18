@@ -15,7 +15,14 @@ export interface MusicTrack {
 }
 
 // Radio Browser API - free, no key required
-const RADIO_API = 'https://de1.api.radio-browser.info/json';
+const RADIO_MIRRORS = [
+    'https://de1.api.radio-browser.info/json',
+    'https://at1.api.radio-browser.info/json',
+    'https://fr1.api.radio-browser.info/json',
+    'https://nl1.api.radio-browser.info/json'
+];
+
+const RADIO_API = RADIO_MIRRORS[Math.floor(Math.random() * RADIO_MIRRORS.length)];
 
 // Tag mappings for different moods
 const moodToTags: Record<string, string> = {
