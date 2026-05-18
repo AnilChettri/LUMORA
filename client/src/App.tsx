@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { useAuth } from "@/hooks/useAuth";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import { AppShell } from "@/components/layout/AppShell";
 import { LoadingSpinner } from "@/components/animations/LoadingSpinner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -82,11 +83,13 @@ function AuthenticatedRoutes() {
 }
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const { hasCompletedOnboarding, isLoading: isOnboardingLoading } = useOnboarding();
   const [showFallback, setShowFallback] = useState(false);
 
+  const isLoading = isAuthLoading || isOnboardingLoading;
+
   useEffect(() => {
-    // If we're still loading after 3 seconds, show the fallback (Landing/Login)
     const timer = setTimeout(() => {
       if (isLoading) {
         console.warn("Auth check timed out, falling back to unauthenticated view.");
@@ -108,6 +111,7 @@ function Router() {
     );
   }
 
+  // User is not authenticated - show Landing/Login
   if (!isAuthenticated || (isLoading && showFallback)) {
     return (
       <Switch>
@@ -118,6 +122,23 @@ function Router() {
     );
   }
 
+  // Authenticated but hasn't completed onboarding - redirect to onboarding
+  if (!hasCompletedOnboarding) {
+    return (
+      <Switch>
+        <Route path="/onboarding" component={Onboarding} />
+        <Route path="/crisis" component={Crisis} />
+        <Route>
+          {() => {
+            window.location.href = "/onboarding";
+            return null;
+          }}
+        </Route>
+      </Switch>
+    );
+  }
+
+  // Authenticated and onboarded - show main app
   return <AuthenticatedRoutes />;
 }
 
