@@ -189,3 +189,47 @@ export const ensureAuthenticated: RequestHandler = async (req: Request, res: Res
 
   next();
 };
+
+export const optionalAuth: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.session.userId;
+
+  if (!userId) {
+    const guestUser: MockUser = {
+      id: "guest",
+      email: "guest@example.com",
+      firstName: "Guest",
+      lastName: "User",
+      profileImageUrl: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
+      claims: { sub: "guest" },
+    };
+    (req as any).user = guestUser;
+    return next();
+  }
+
+  const user = await storage.getUser(userId);
+  if (!user) {
+    const guestUser: MockUser = {
+      id: "guest",
+      email: "guest@example.com",
+      firstName: "Guest",
+      lastName: "User",
+      profileImageUrl: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
+      claims: { sub: "guest" },
+    };
+    (req as any).user = guestUser;
+    return next();
+  }
+
+  (req as any).user = {
+    id: user.id,
+    email: user.email ?? "",
+    firstName: user.firstName,
+    lastName: user.lastName,
+    profileImageUrl: user.profileImageUrl,
+    claims: {
+      sub: user.id,
+    },
+  } satisfies MockUser;
+
+  next();
+};

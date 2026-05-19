@@ -7,9 +7,10 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { AppShell } from "@/components/layout/AppShell";
 import { LoadingSpinner } from "@/components/animations/LoadingSpinner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { Suspense, lazy, useState, useEffect, useCallback } from "react";
+import { Suspense, lazy, useState, useEffect } from "react";
 
 import Landing from "@/pages/Landing";
+import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 import NotFound from "@/pages/not-found";
 
@@ -38,7 +39,7 @@ function LoadingScreen() {
 }
 
 function Router() {
-  const [, setLocation] = useLocation();
+  const [location] = useLocation();
   const [appState, setAppState] = useState<AppState>("landing");
   const [isReady, setIsReady] = useState(false);
 
@@ -56,67 +57,45 @@ function Router() {
     setIsReady(true);
   }, []);
 
-  useEffect(() => {
-    const handleStorageChange = () => {
-      if (appState === "landing") {
-        const guestUser = localStorage.getItem("lumi_guest_user");
-        const appStateSaved = localStorage.getItem("lumi_app_state");
-        if (guestUser && appStateSaved !== "dashboard") {
-          setAppState("onboarding");
-          localStorage.setItem("lumi_app_state", "onboarding");
-        }
-      }
-    };
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
-  }, [appState]);
-
-  const handleLogin = useCallback(() => {
-    setAppState("onboarding");
-    localStorage.setItem("lumi_app_state", "onboarding");
-  }, []);
-
-  const handleOnboardingComplete = useCallback(() => {
-    setAppState("dashboard");
-    localStorage.setItem("lumi_app_state", "dashboard");
-    setLocation("/");
-  }, [setLocation]);
-
-  const handleLogout = useCallback(() => {
-    setAppState("landing");
-    localStorage.removeItem("lumi_app_state");
-    localStorage.removeItem("lumi_guest_user");
-  }, []);
-
   if (!isReady) {
     return <LoadingScreen />;
   }
 
-  if (appState === "onboarding") {
+  if (location === "/onboarding" || appState === "onboarding") {
     return (
       <Suspense fallback={<LoadingScreen />}>
-        <Onboarding onComplete={handleOnboardingComplete} />
+        <Onboarding onComplete={() => {
+          setAppState("dashboard");
+          localStorage.setItem("lumi_app_state", "dashboard");
+          window.location.href = "/dashboard";
+        }} />
       </Suspense>
     );
   }
 
-  if (appState === "dashboard") {
+  if (location.startsWith("/dashboard")) {
+    if (appState !== "dashboard") {
+      window.location.href = "/";
+      return <LoadingScreen />;
+    }
     return (
       <ErrorBoundary fallbackMessage="Something went wrong. Please refresh the page." showHomeButton>
         <AppShell>
           <Suspense fallback={<LoadingScreen />}>
             <Switch>
-              <Route path="/" component={Dashboard} />
-              <Route path="/voice" component={VoiceAgent} />
-              <Route path="/exercises" component={Exercises} />
-              <Route path="/community" component={Community} />
-              <Route path="/journal" component={Journal} />
-              <Route path="/music" component={MusicSpace} />
-              <Route path="/books" component={BooksSpace} />
-              <Route path="/games" component={GamesSpace} />
-              <Route path="/crisis" component={Crisis} />
-              <Route path="/analysis" component={Analysis} />
-              <Route component={NotFound} />
+              <Route path="/dashboard" component={Dashboard} />
+              <Route path="/dashboard/voice" component={VoiceAgent} />
+              <Route path="/dashboard/exercises" component={Exercises} />
+              <Route path="/dashboard/community" component={Community} />
+              <Route path="/dashboard/journal" component={Journal} />
+              <Route path="/dashboard/music" component={MusicSpace} />
+              <Route path="/dashboard/books" component={BooksSpace} />
+              <Route path="/dashboard/games" component={GamesSpace} />
+              <Route path="/dashboard/crisis" component={Crisis} />
+              <Route path="/dashboard/analysis" component={Analysis} />
+              <Route>
+                <Dashboard />
+              </Route>
             </Switch>
           </Suspense>
         </AppShell>
@@ -127,8 +106,17 @@ function Router() {
   return (
     <Suspense fallback={<LoadingScreen />}>
       <Switch>
-        <Route path="/crisis" component={Crisis} />
-        <Route>
+        <Route path="/login">
+          <Login />
+        </Route>
+        <Route path="/onboarding">
+          <Onboarding onComplete={() => {
+            setAppState("dashboard");
+            localStorage.setItem("lumi_app_state", "dashboard");
+            window.location.href = "/dashboard";
+          }} />
+        </Route>
+        <Route path="/">
           <Landing />
         </Route>
       </Switch>

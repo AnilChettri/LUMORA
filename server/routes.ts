@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupMockAuth, ensureAuthenticated } from "./auth";
+import { setupMockAuth, ensureAuthenticated, optionalAuth } from "./auth";
 import { 
   chatWithLumi, 
   detectSentiment, 
@@ -33,7 +33,7 @@ export async function registerRoutes(
   setupMockAuth(app);
 
   // Get current authenticated user
-  app.get("/api/auth/user", ensureAuthenticated, async (req: any, res) => {
+  app.get("/api/auth/user", optionalAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
@@ -59,7 +59,7 @@ export async function registerRoutes(
   // === MOOD ROUTES ===
   
   // Get current mood
-  app.get("/api/mood/current", ensureAuthenticated, async (req: any, res) => {
+  app.get("/api/mood/current", optionalAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const moodLog = await storage.getCurrentMood(userId);
@@ -153,7 +153,7 @@ export async function registerRoutes(
   // === POST ROUTES ===
 
   // Get posts
-  app.get("/api/posts", ensureAuthenticated, async (req: any, res) => {
+  app.get("/api/posts", optionalAuth, async (req: any, res) => {
     try {
       const { category, sort } = req.query;
       const posts = await storage.getPosts({
@@ -168,7 +168,7 @@ export async function registerRoutes(
   });
 
   // Get trending posts
-  app.get("/api/posts/trending", ensureAuthenticated, async (req: any, res) => {
+  app.get("/api/posts/trending", optionalAuth, async (req: any, res) => {
     try {
       const posts = await storage.getTrendingPosts(10);
       res.json(posts);
@@ -179,7 +179,7 @@ export async function registerRoutes(
   });
 
   // Get single post
-  app.get("/api/posts/:id", ensureAuthenticated, async (req: any, res) => {
+  app.get("/api/posts/:id", optionalAuth, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
       const post = await storage.getPost(id);

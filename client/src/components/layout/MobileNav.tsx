@@ -15,10 +15,10 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { path: "/", icon: Home, label: "Home" },
-  { path: "/voice", icon: Mic, label: "Lumi" },
-  { path: "/analysis", icon: BarChart3, label: "Analysis" },
-  { path: "/community", icon: Users, label: "Community" },
+  { path: "/dashboard", icon: Home, label: "Home" },
+  { path: "/dashboard/voice", icon: Mic, label: "Lumi" },
+  { path: "/dashboard/analysis", icon: BarChart3, label: "Analysis" },
+  { path: "/dashboard/community", icon: Users, label: "Community" },
 ];
 
 export function MobileNav() {

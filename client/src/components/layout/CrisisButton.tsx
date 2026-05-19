@@ -5,7 +5,7 @@ import { Link } from "wouter";
 
 export function CrisisButton() {
   return (
-    <Link href="/crisis">
+    <Link href="/dashboard/crisis">
       <motion.div
         className="fixed bottom-20 right-4 z-50 md:bottom-6"
         initial={{ scale: 0, opacity: 0 }}

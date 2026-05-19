@@ -109,16 +109,19 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
 
   const handleChooseMode = (mode: "guided" | "manual") => {
     setPhase("redirecting");
-    setTimeout(() => {
+    if (mode === "guided") {
+      setTimeout(() => {
+        if (onComplete) {
+          onComplete(detectedMood || "neutral");
+        }
+        setLocation(`/dashboard/voice?onboarding=true&initialMood=${detectedMood}`);
+      }, 1000);
+    } else {
       if (onComplete) {
         onComplete(detectedMood || "neutral");
       }
-      if (mode === "guided") {
-        setLocation(`/voice?onboarding=true&initialMood=${detectedMood}`);
-      } else {
-        setLocation("/");
-      }
-    }, 1000);
+      setLocation("/dashboard");
+    }
   };
 
   if (phase === "welcome") {

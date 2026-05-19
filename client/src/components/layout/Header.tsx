@@ -16,10 +16,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { path: "/", icon: Home, label: "Home" },
-  { path: "/voice", icon: Mic, label: "Lumi" },
-  { path: "/community", icon: Users, label: "Community" },
-  { path: "/analysis", icon: BarChart3, label: "Analysis" },
+  { path: "/dashboard", icon: Home, label: "Home" },
+  { path: "/dashboard/voice", icon: Mic, label: "Lumi" },
+  { path: "/dashboard/community", icon: Users, label: "Community" },
+  { path: "/dashboard/analysis", icon: BarChart3, label: "Analysis" },
 ];
 
 export function Header() {
@@ -29,7 +29,6 @@ export function Header() {
 
   const handleLogout = async () => {
     await logout();
-    setLocation("/login");
   };
 
   const initials = user?.firstName && user?.lastName
@@ -39,7 +38,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 w-full bg-background/80 backdrop-blur-lg border-b border-border/50">
       <div className="container flex h-14 items-center justify-between gap-4 px-4">
-        <Link href="/">
+        <Link href="/dashboard">
           <motion.div
             className="flex items-center gap-3 cursor-pointer"
             whileHover={{ scale: 1.02 }}

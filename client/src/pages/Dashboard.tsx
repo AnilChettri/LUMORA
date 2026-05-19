@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link, useLocation } from "wouter";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useQuery } from "@tanstack/react-query";
@@ -15,7 +15,6 @@ import { LumiCharacter } from "@/components/animations/LumiCharacter";
 import { BrainVisualization } from "@/components/animations/BrainVisualization";
 import { LoadingSkeleton } from "@/components/animations/LoadingSpinner";
 import { SmartRecommendations } from "@/components/SmartRecommendations";
-import { useSessionState, getGreetingScript, getSessionResumeScript } from "@/hooks/useSessionState";
 import { speakText } from "@/lib/aiMocks";
 import type { MoodType, Post } from "@shared/schema";
 import {
@@ -40,7 +39,7 @@ import {
 const spaces = [
   {
     id: "music",
-    path: "/music",
+    path: "/dashboard/music",
     icon: Music4,
     label: "Soundscapes",
     description: "Curated calm mixes",
@@ -49,7 +48,7 @@ const spaces = [
   },
   {
     id: "books",
-    path: "/books",
+    path: "/dashboard/books",
     icon: Sparkle,
     label: "Stories",
     description: "Inspiring reads",
@@ -58,7 +57,7 @@ const spaces = [
   },
   {
     id: "exercises",
-    path: "/exercises",
+    path: "/dashboard/exercises",
     icon: HeartPulse,
     label: "Practices",
     description: "Mindful moments",
@@ -67,7 +66,7 @@ const spaces = [
   },
   {
     id: "games",
-    path: "/games",
+    path: "/dashboard/games",
     icon: Joystick,
     label: "Play",
     description: "Lighthearted fun",
@@ -76,7 +75,7 @@ const spaces = [
   },
   {
     id: "community",
-    path: "/community",
+    path: "/dashboard/community",
     icon: UsersRound,
     label: "Community",
     description: "Support circle",
@@ -85,7 +84,7 @@ const spaces = [
   },
   {
     id: "journal",
-    path: "/journal",
+    path: "/dashboard/journal",
     icon: NotebookPen,
     label: "Journal",
     description: "Daily reflections",
@@ -95,10 +94,10 @@ const spaces = [
 ];
 
 const quickTools = [
-  { id: "breathing", icon: Wind, label: "Breathing", path: "/exercises?type=breathing" },
-  { id: "grounding", icon: Stars, label: "Grounding", path: "/exercises?type=grounding" },
-  { id: "sleep", icon: MoonStar, label: "Sleep Ritual", path: "/exercises?type=sleep" },
-  { id: "energy", icon: Sunrise, label: "Energy Boost", path: "/exercises?type=energy" },
+  { id: "breathing", icon: Wind, label: "Breathing", path: "/dashboard/exercises?type=breathing" },
+  { id: "grounding", icon: Stars, label: "Grounding", path: "/dashboard/exercises?type=grounding" },
+  { id: "sleep", icon: MoonStar, label: "Sleep Ritual", path: "/dashboard/exercises?type=sleep" },
+  { id: "energy", icon: Sunrise, label: "Energy Boost", path: "/dashboard/exercises?type=energy" },
 ];
 
 const moodLabels: Record<MoodType, { label: string; emoji: string }> = {
@@ -127,9 +126,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const { hasCompletedOnboarding } = useOnboarding();
   const [, setLocation] = useLocation();
-  const { session, hasIncompleteSession, endSession } = useSessionState();
   const [hasSpokenGreeting, setHasSpokenGreeting] = useState(false);
-  const [showResumePrompt, setShowResumePrompt] = useState(false);
 
   const { data: moodData } = useQuery<{ mood: MoodType; confidence: number }>({
     queryKey: ["/api/mood/current"],
@@ -149,89 +146,19 @@ export default function Dashboard() {
     runImmediateMoodPlan(currentMood, setLocation);
   };
 
-  const handleResumeSession = useCallback(() => {
-    if (session.type === "exercise" && session.exerciseId) {
-      const params = new URLSearchParams();
-      params.set("type", session.exerciseCategory || "breathing");
-      params.set("exerciseId", session.exerciseId);
-      params.set("autoStart", "true");
-      setLocation(`/exercises?${params.toString()}`);
-    } else if (session.type === "game") {
-      setLocation(`/games?game=${session.exerciseId}&autoStart=true`);
-    } else if (session.type === "music") {
-      setLocation(`/music?mood=calm&autoPlay=true`);
-    }
-    setShowResumePrompt(false);
-  }, [session, setLocation]);
-
-  const handleStartNewSession = () => {
-    endSession();
-    setShowResumePrompt(false);
-    runImmediateMoodPlan(currentMood, setLocation);
-  };
-
   useEffect(() => {
     const autoPlayConsent = localStorage.getItem("tts-auto-play-consent");
     if (autoPlayConsent === "true" && !hasSpokenGreeting && hasCompletedOnboarding) {
-      const greetingText = getGreetingScript(currentMood, greeting);
-      
+      const greetingText = `Welcome back, ${firstName}. How are you feeling today?`;
       setTimeout(() => {
         speakText(greetingText, 0.9);
         setHasSpokenGreeting(true);
-        
-        setTimeout(() => {
-          if (hasIncompleteSession) {
-            setShowResumePrompt(true);
-          }
-        }, 2000);
       }, 500);
-    } else if (hasIncompleteSession) {
-      setShowResumePrompt(true);
     }
-  }, [currentMood, greeting, hasSpokenGreeting, hasCompletedOnboarding, hasIncompleteSession]);
+  }, [currentMood, greeting, hasSpokenGreeting, hasCompletedOnboarding, firstName]);
 
   return (
     <>
-      {showResumePrompt && hasIncompleteSession && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-          onClick={() => setShowResumePrompt(false)}
-        >
-          <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            className="mx-4 w-full max-w-md rounded-3xl border border-white/20 bg-gradient-to-br from-violet-950 to-purple-950 p-6 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center gap-4 mb-4">
-              <LumiCharacter size="md" mood="listening" />
-              <div>
-                <h3 className="text-lg font-semibold text-white">Welcome back!</h3>
-                <p className="text-sm text-white/70">
-                  {getSessionResumeScript(session.exerciseId || "session")}
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                className="flex-1 border-white/20 text-white hover:bg-white/10"
-                onClick={handleStartNewSession}
-              >
-                Start Fresh
-              </Button>
-              <Button
-                className="flex-1 bg-gradient-to-r from-rose-400 via-purple-500 to-indigo-500 text-white"
-                onClick={handleResumeSession}
-              >
-                Continue Session
-              </Button>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
 
       <Screen>
         <Header />
@@ -291,7 +218,7 @@ export default function Dashboard() {
                   Start Guided Session
                 </Button>
                 
-                <Link href="/voice">
+                <Link href="/dashboard/voice">
                   <Button
                     variant="outline"
                     size="lg"
@@ -351,7 +278,7 @@ export default function Dashboard() {
                 <h2 className="text-3xl font-bold font-display tracking-tight">Explore Spaces</h2>
                 <p className="text-muted-foreground mt-1">Choose your environment</p>
               </div>
-              <Link href="/analysis">
+              <Link href="/dashboard/analysis">
                 <Button variant="ghost" className="rounded-full font-bold text-primary hover:text-primary hover:bg-primary/10">
                   View Metrics <ArrowUpRight className="ml-2 h-4 w-4" />
                 </Button>
@@ -399,7 +326,7 @@ export default function Dashboard() {
                   </div>
                   <h2 className="text-2xl font-bold font-display">Community Pulse</h2>
                 </div>
-                <Link href="/community">
+                <Link href="/dashboard/community">
                   <Button variant="outline" className="rounded-full border-primary/20 hover:bg-primary/5">
                     Join Conversation
                   </Button>
