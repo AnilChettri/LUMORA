@@ -1,17 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import type { User } from "@shared/schema";
 
 export function useAuth() {
   const { data: user, isLoading, error, refetch } = useQuery<User | null>({
     queryKey: ["/api/auth/user"],
     retry: false,
-    staleTime: Infinity,
+    staleTime: 0,
     queryFn: async () => {
-      const guestUser = localStorage.getItem("lumi_guest_user");
-      if (guestUser) {
-        return JSON.parse(guestUser) as User;
-      }
-
       try {
         const response = await fetch("/api/auth/user", { credentials: "include" });
 
@@ -30,31 +25,38 @@ export function useAuth() {
     },
   });
 
+  const loginMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ userId }),
+      });
+      if (!response.ok) {
+        throw new Error("Login failed");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      refetch();
+    },
+  });
+
   const loginAsGuest = async () => {
-    const guestUser: User = {
-      id: "guest-id",
-      username: "Guest",
-      firstName: "Guest",
-      lastName: "Explorer",
-      email: "guest@example.com",
-      profileImageUrl: null,
-      isGuest: true,
-      hasCompletedTour: false,
-      hasConsentedCamera: false,
-      hasConsentedMic: false,
-      hasConsentedData: false,
-      currentMood: "neutral",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    } as User;
-    localStorage.setItem("lumi_guest_user", JSON.stringify(guestUser));
-    await refetch();
+    await loginMutation.mutateAsync("guest");
+  };
+
+  const loginAsDemo = async (userId: string) => {
+    await loginMutation.mutateAsync(userId);
   };
 
   const logout = async () => {
-    localStorage.removeItem("lumi_guest_user");
     try {
-      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
     } catch (e) {
       console.error("Logout fetch failed", e);
     }
@@ -66,6 +68,7 @@ export function useAuth() {
     isLoading,
     isAuthenticated: !!user,
     loginAsGuest,
+    loginAsDemo,
     logout,
     error,
   };

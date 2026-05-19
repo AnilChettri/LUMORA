@@ -38,7 +38,7 @@ function LoadingScreen() {
 }
 
 function Router() {
-  const [location] = useLocation();
+  const [, setLocation] = useLocation();
   const [appState, setAppState] = useState<AppState>("landing");
   const [isReady, setIsReady] = useState(false);
 
@@ -46,18 +46,30 @@ function Router() {
     const saved = localStorage.getItem("lumi_app_state") as AppState;
     if (saved === "onboarding" || saved === "dashboard") {
       setAppState(saved);
+    } else {
+      const guestUser = localStorage.getItem("lumi_guest_user");
+      if (guestUser) {
+        setAppState("onboarding");
+        localStorage.setItem("lumi_app_state", "onboarding");
+      }
     }
     setIsReady(true);
   }, []);
 
   useEffect(() => {
-    if (appState === "onboarding" && location === "/") {
-      const saved = localStorage.getItem("lumi_app_state");
-      if (saved === "dashboard") {
-        setAppState("dashboard");
+    const handleStorageChange = () => {
+      if (appState === "landing") {
+        const guestUser = localStorage.getItem("lumi_guest_user");
+        const appStateSaved = localStorage.getItem("lumi_app_state");
+        if (guestUser && appStateSaved !== "dashboard") {
+          setAppState("onboarding");
+          localStorage.setItem("lumi_app_state", "onboarding");
+        }
       }
-    }
-  }, [location, appState]);
+    };
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, [appState]);
 
   const handleLogin = useCallback(() => {
     setAppState("onboarding");
@@ -67,7 +79,8 @@ function Router() {
   const handleOnboardingComplete = useCallback(() => {
     setAppState("dashboard");
     localStorage.setItem("lumi_app_state", "dashboard");
-  }, []);
+    setLocation("/");
+  }, [setLocation]);
 
   const handleLogout = useCallback(() => {
     setAppState("landing");
@@ -82,13 +95,7 @@ function Router() {
   if (appState === "onboarding") {
     return (
       <Suspense fallback={<LoadingScreen />}>
-        <Switch>
-          <Route path="/" component={Dashboard} />
-          <Route path="/voice" component={VoiceAgent} />
-          <Route>
-            {() => <Onboarding onComplete={handleOnboardingComplete} />}
-          </Route>
-        </Switch>
+        <Onboarding onComplete={handleOnboardingComplete} />
       </Suspense>
     );
   }
@@ -96,7 +103,7 @@ function Router() {
   if (appState === "dashboard") {
     return (
       <ErrorBoundary fallbackMessage="Something went wrong. Please refresh the page." showHomeButton>
-        <AppShell onLogout={handleLogout}>
+        <AppShell>
           <Suspense fallback={<LoadingScreen />}>
             <Switch>
               <Route path="/" component={Dashboard} />
@@ -121,10 +128,8 @@ function Router() {
     <Suspense fallback={<LoadingScreen />}>
       <Switch>
         <Route path="/crisis" component={Crisis} />
-        <Route path="/login" component={Onboarding} />
-        <Route path="/onboarding" component={Onboarding} />
         <Route>
-          {() => <Landing onLogin={handleLogin} />}
+          <Landing />
         </Route>
       </Switch>
     </Suspense>
