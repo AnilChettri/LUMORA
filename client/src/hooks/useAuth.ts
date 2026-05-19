@@ -7,7 +7,6 @@ export function useAuth() {
     retry: false,
     staleTime: Infinity,
     queryFn: async () => {
-      // Check for guest user first
       const guestUser = localStorage.getItem("lumi_guest_user");
       if (guestUser) {
         return JSON.parse(guestUser) as User;
@@ -21,12 +20,11 @@ export function useAuth() {
         }
 
         if (!response.ok) {
-          throw new Error("Backend unavailable");
+          return null;
         }
 
         return (await response.json()) as User;
-      } catch (err) {
-        console.warn("Backend auth failed, checking for guest session...");
+      } catch {
         return null;
       }
     },
