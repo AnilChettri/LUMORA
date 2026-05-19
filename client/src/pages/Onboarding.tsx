@@ -96,10 +96,14 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   const handleChooseMode = (mode: "guided" | "manual") => {
     setPhase("redirecting");
     setTimeout(() => {
-      if (onComplete) {
-        onComplete(detectedMood || "neutral");
+      if (mode === "guided") {
+        setLocation(`/voice?onboarding=true&initialMood=${detectedMood}`);
       } else {
-        setLocation(mode === "guided" ? `/voice?onboarding=true&initialMood=${detectedMood}` : "/");
+        if (onComplete) {
+          onComplete(detectedMood || "neutral");
+        } else {
+          setLocation("/");
+        }
       }
     }, 1000);
   };
