@@ -12,12 +12,17 @@ interface OnboardingActions {
 export function useOnboarding(): OnboardingActions {
   const { user, isLoading: isUserLoading } = useAuth();
   const queryClient = useQueryClient();
-  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (isUserLoading) return;
-    setHasCompletedOnboarding(Boolean(user?.hasCompletedTour));
+    if (!user) {
+      setHasCompletedOnboarding(true);
+      setIsLoading(false);
+      return;
+    }
+    setHasCompletedOnboarding(Boolean(user.hasCompletedTour));
     setIsLoading(false);
   }, [user, isUserLoading]);
 
