@@ -7,14 +7,12 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { AppShell } from "@/components/layout/AppShell";
 import { LoadingSpinner } from "@/components/animations/LoadingSpinner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { Suspense, lazy, useState, useEffect } from "react";
+import { Suspense, lazy, useState, useEffect, useCallback } from "react";
 
-// Eagerly loaded pages
 import Landing from "@/pages/Landing";
 import Dashboard from "@/pages/Dashboard";
 import NotFound from "@/pages/not-found";
 
-// Lazy loaded pages
 const VoiceAgent = lazy(() => import("@/pages/VoiceAgent"));
 const Exercises = lazy(() => import("@/pages/Exercises"));
 const Community = lazy(() => import("@/pages/Community"));
@@ -28,45 +26,53 @@ const Analysis = lazy(() => import("@/pages/Analysis"));
 
 type AppState = "landing" | "onboarding" | "dashboard";
 
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="text-center">
+        <LoadingSpinner size="lg" variant="neural" />
+        <p className="mt-4 text-muted-foreground">Loading Lumi...</p>
+      </div>
+    </div>
+  );
+}
+
 function Router() {
   const [location] = useLocation();
   const [appState, setAppState] = useState<AppState>("landing");
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("lumi_app_state") as AppState;
-    if (saved && saved !== "landing") {
+    if (saved === "onboarding" || saved === "dashboard") {
       setAppState(saved);
     }
+    setIsReady(true);
   }, []);
 
-  useEffect(() => {
-    const saved = localStorage.getItem("lumi_app_state") as AppState;
-    if (saved === "onboarding" && appState === "landing") {
-      setAppState("onboarding");
-    } else if (saved === "dashboard" && appState === "landing") {
-      setAppState("dashboard");
-    }
-  }, [location]);
-
-  const handleLogin = () => {
+  const handleLogin = useCallback(() => {
     setAppState("onboarding");
     localStorage.setItem("lumi_app_state", "onboarding");
-  };
+  }, []);
 
-  const handleOnboardingComplete = () => {
+  const handleOnboardingComplete = useCallback(() => {
     setAppState("dashboard");
     localStorage.setItem("lumi_app_state", "dashboard");
-  };
+  }, []);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     setAppState("landing");
     localStorage.removeItem("lumi_app_state");
     localStorage.removeItem("lumi_guest_user");
-  };
+  }, []);
+
+  if (!isReady) {
+    return <LoadingScreen />;
+  }
 
   if (appState === "onboarding") {
     return (
-      <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><LoadingSpinner size="lg" /></div>}>
+      <Suspense fallback={<LoadingScreen />}>
         <Onboarding onComplete={handleOnboardingComplete} />
       </Suspense>
     );
@@ -74,13 +80,9 @@ function Router() {
 
   if (appState === "dashboard") {
     return (
-      <ErrorBoundary fallbackMessage="Something went wrong. Please try refreshing." showHomeButton>
+      <ErrorBoundary fallbackMessage="Something went wrong. Please refresh the page." showHomeButton>
         <AppShell onLogout={handleLogout}>
-          <Suspense fallback={
-            <div className="min-h-screen flex items-center justify-center">
-              <LoadingSpinner size="lg" variant="neural" />
-            </div>
-          }>
+          <Suspense fallback={<LoadingScreen />}>
             <Switch>
               <Route path="/" component={Dashboard} />
               <Route path="/voice" component={VoiceAgent} />
@@ -92,8 +94,6 @@ function Router() {
               <Route path="/games" component={GamesSpace} />
               <Route path="/crisis" component={Crisis} />
               <Route path="/analysis" component={Analysis} />
-              <Route path="/login" component={Dashboard} />
-              <Route path="/onboarding" component={Dashboard} />
               <Route component={NotFound} />
             </Switch>
           </Suspense>
@@ -102,15 +102,12 @@ function Router() {
     );
   }
 
-  // Landing state - show Landing for all routes including /login and /onboarding
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" variant="neural" />
-      </div>
-    }>
+    <Suspense fallback={<LoadingScreen />}>
       <Switch>
         <Route path="/crisis" component={Crisis} />
+        <Route path="/login" component={Onboarding} />
+        <Route path="/onboarding" component={Onboarding} />
         <Route>
           {() => <Landing onLogin={handleLogin} />}
         </Route>
