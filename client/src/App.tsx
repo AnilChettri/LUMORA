@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -30,13 +30,17 @@ const Analysis = lazy(() => import("@/pages/Analysis"));
 type AppState = "landing" | "onboarding" | "dashboard";
 
 function Router() {
-  const [appState, setAppState] = useState<AppState>("landing");
-  const [pendingMood, setPendingMood] = useState<string>("neutral");
+  const [location] = useLocation();
+  const [appState, setAppState] = useState<AppState>(() => {
+    if (typeof window === "undefined") return "landing";
+    const saved = localStorage.getItem("lumi_app_state") as AppState;
+    return saved || "landing";
+  });
 
   useEffect(() => {
-    const savedState = localStorage.getItem("lumi_app_state") as AppState;
-    if (savedState && savedState !== "landing") {
-      setAppState(savedState);
+    const saved = localStorage.getItem("lumi_app_state") as AppState;
+    if (saved && saved !== "landing" && appState === "landing") {
+      setAppState(saved);
     }
   }, []);
 
@@ -45,8 +49,7 @@ function Router() {
     localStorage.setItem("lumi_app_state", "onboarding");
   };
 
-  const handleOnboardingComplete = (mood: string) => {
-    setPendingMood(mood);
+  const handleOnboardingComplete = () => {
     setAppState("dashboard");
     localStorage.setItem("lumi_app_state", "dashboard");
   };
@@ -57,11 +60,26 @@ function Router() {
     localStorage.removeItem("lumi_guest_user");
   };
 
+  const handleBackToLanding = () => {
+    setAppState("landing");
+    localStorage.removeItem("lumi_app_state");
+  };
+
+  // Handle direct URL access - check path and set appropriate state
+  useEffect(() => {
+    if (location === "/login" || location === "/onboarding") {
+      if (appState === "landing") {
+        handleLogin();
+      }
+    } else if (location !== "/" && appState === "landing") {
+      // Any other direct access goes to landing
+      handleBackToLanding();
+    }
+  }, [location]);
+
   if (appState === "onboarding") {
     return (
-      <Onboarding
-        onComplete={handleOnboardingComplete}
-      />
+      <Onboarding onComplete={handleOnboardingComplete} />
     );
   }
 
@@ -85,6 +103,18 @@ function Router() {
               <Route path="/games" component={GamesSpace} />
               <Route path="/crisis" component={Crisis} />
               <Route path="/analysis" component={Analysis} />
+              <Route path="/onboarding">
+                {() => {
+                  handleLogin();
+                  return null;
+                }}
+              </Route>
+              <Route path="/login">
+                {() => {
+                  handleLogin();
+                  return null;
+                }}
+              </Route>
               <Route component={NotFound} />
             </Switch>
           </Suspense>
@@ -98,6 +128,12 @@ function Router() {
     <Switch>
       <Route path="/crisis" component={Crisis} />
       <Route path="/login">
+        {() => {
+          handleLogin();
+          return null;
+        }}
+      </Route>
+      <Route path="/onboarding">
         {() => {
           handleLogin();
           return null;
