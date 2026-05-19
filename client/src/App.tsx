@@ -87,7 +87,7 @@ function Router() {
   const { hasCompletedOnboarding, isLoading: isOnboardingLoading } = useOnboarding();
   const [showFallback, setShowFallback] = useState(false);
 
-  const isLoading = isAuthLoading || isOnboardingLoading;
+  const isLoading = isAuthLoading || (isAuthenticated && isOnboardingLoading);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -100,7 +100,7 @@ function Router() {
     return () => clearTimeout(timer);
   }, [isLoading]);
 
-  if (isLoading && !showFallback) {
+  if (isAuthLoading && !showFallback) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -112,13 +112,26 @@ function Router() {
   }
 
   // User is not authenticated - show Landing/Login
-  if (!isAuthenticated || (isLoading && showFallback)) {
+  if (!isAuthenticated) {
     return (
       <Switch>
         <Route path="/crisis" component={Crisis} />
         <Route path="/login" component={Login} />
+        <Route path="/onboarding" component={Onboarding} />
         <Route component={Landing} />
       </Switch>
+    );
+  }
+
+  // Authenticated - check onboarding status
+  if (isOnboardingLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <LoadingSpinner size="lg" variant="neural" />
+          <p className="mt-4 text-muted-foreground">Loading Lumi...</p>
+        </div>
+      </div>
     );
   }
 
