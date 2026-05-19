@@ -43,10 +43,20 @@ export function useAuth() {
   });
 
   const loginAsGuest = async () => {
-    await loginMutation.mutateAsync("guest");
-    localStorage.setItem("lumi_guest_user", "true");
-    localStorage.setItem("lumi_app_state", "onboarding");
-    setLocation("/onboarding");
+    console.log("Starting guest login...");
+    try {
+      await loginMutation.mutateAsync("guest");
+      console.log("Guest login API success");
+      localStorage.setItem("lumi_guest_user", "true");
+      localStorage.setItem("lumi_app_state", "onboarding");
+      console.log("Navigating to /onboarding");
+      setLocation("/onboarding");
+    } catch (error) {
+      console.error("Guest login failed:", error);
+      localStorage.setItem("lumi_guest_user", "true");
+      localStorage.setItem("lumi_app_state", "onboarding");
+      setLocation("/onboarding");
+    }
   };
 
   const loginAsDemo = async (userId: string) => {
