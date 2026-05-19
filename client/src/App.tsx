@@ -50,6 +50,15 @@ function Router() {
     setIsReady(true);
   }, []);
 
+  useEffect(() => {
+    if (appState === "onboarding" && location === "/") {
+      const saved = localStorage.getItem("lumi_app_state");
+      if (saved === "dashboard") {
+        setAppState("dashboard");
+      }
+    }
+  }, [location, appState]);
+
   const handleLogin = useCallback(() => {
     setAppState("onboarding");
     localStorage.setItem("lumi_app_state", "onboarding");
@@ -73,7 +82,13 @@ function Router() {
   if (appState === "onboarding") {
     return (
       <Suspense fallback={<LoadingScreen />}>
-        <Onboarding onComplete={handleOnboardingComplete} />
+        <Switch>
+          <Route path="/" component={Dashboard} />
+          <Route path="/voice" component={VoiceAgent} />
+          <Route>
+            {() => <Onboarding onComplete={handleOnboardingComplete} />}
+          </Route>
+        </Switch>
       </Suspense>
     );
   }

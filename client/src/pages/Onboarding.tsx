@@ -116,7 +116,6 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
         if (onComplete) {
           onComplete(detectedMood || "neutral");
         }
-        setLocation("/");
       }
     }, 1000);
   };
