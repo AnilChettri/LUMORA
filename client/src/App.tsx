@@ -11,7 +11,6 @@ import { Suspense, lazy, useState, useEffect } from "react";
 
 // Eagerly loaded pages
 import Landing from "@/pages/Landing";
-import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 import NotFound from "@/pages/not-found";
 
@@ -31,18 +30,23 @@ type AppState = "landing" | "onboarding" | "dashboard";
 
 function Router() {
   const [location] = useLocation();
-  const [appState, setAppState] = useState<AppState>(() => {
-    if (typeof window === "undefined") return "landing";
-    const saved = localStorage.getItem("lumi_app_state") as AppState;
-    return saved || "landing";
-  });
+  const [appState, setAppState] = useState<AppState>("landing");
 
   useEffect(() => {
     const saved = localStorage.getItem("lumi_app_state") as AppState;
-    if (saved && saved !== "landing" && appState === "landing") {
+    if (saved && saved !== "landing") {
       setAppState(saved);
     }
   }, []);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("lumi_app_state") as AppState;
+    if (saved === "onboarding" && appState === "landing") {
+      setAppState("onboarding");
+    } else if (saved === "dashboard" && appState === "landing") {
+      setAppState("dashboard");
+    }
+  }, [location]);
 
   const handleLogin = () => {
     setAppState("onboarding");
@@ -60,26 +64,11 @@ function Router() {
     localStorage.removeItem("lumi_guest_user");
   };
 
-  const handleBackToLanding = () => {
-    setAppState("landing");
-    localStorage.removeItem("lumi_app_state");
-  };
-
-  // Handle direct URL access - check path and set appropriate state
-  useEffect(() => {
-    if (location === "/login" || location === "/onboarding") {
-      if (appState === "landing") {
-        handleLogin();
-      }
-    } else if (location !== "/" && appState === "landing") {
-      // Any other direct access goes to landing
-      handleBackToLanding();
-    }
-  }, [location]);
-
   if (appState === "onboarding") {
     return (
-      <Onboarding onComplete={handleOnboardingComplete} />
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><LoadingSpinner size="lg" /></div>}>
+        <Onboarding onComplete={handleOnboardingComplete} />
+      </Suspense>
     );
   }
 
@@ -103,18 +92,8 @@ function Router() {
               <Route path="/games" component={GamesSpace} />
               <Route path="/crisis" component={Crisis} />
               <Route path="/analysis" component={Analysis} />
-              <Route path="/onboarding">
-                {() => {
-                  handleLogin();
-                  return null;
-                }}
-              </Route>
-              <Route path="/login">
-                {() => {
-                  handleLogin();
-                  return null;
-                }}
-              </Route>
+              <Route path="/login" component={Dashboard} />
+              <Route path="/onboarding" component={Dashboard} />
               <Route component={NotFound} />
             </Switch>
           </Suspense>
@@ -123,26 +102,20 @@ function Router() {
     );
   }
 
-  // Landing state
+  // Landing state - show Landing for all routes including /login and /onboarding
   return (
-    <Switch>
-      <Route path="/crisis" component={Crisis} />
-      <Route path="/login">
-        {() => {
-          handleLogin();
-          return null;
-        }}
-      </Route>
-      <Route path="/onboarding">
-        {() => {
-          handleLogin();
-          return null;
-        }}
-      </Route>
-      <Route>
-        {() => <Landing onLogin={handleLogin} />}
-      </Route>
-    </Switch>
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" variant="neural" />
+      </div>
+    }>
+      <Switch>
+        <Route path="/crisis" component={Crisis} />
+        <Route>
+          {() => <Landing onLogin={handleLogin} />}
+        </Route>
+      </Switch>
+    </Suspense>
   );
 }
 
