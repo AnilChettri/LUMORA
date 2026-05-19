@@ -37,6 +37,20 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   const [detectedMood, setDetectedMood] = useState<MoodType | null>(null);
   const [confidence, setConfidence] = useState(0);
 
+  const stopCamera = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (phase === "result" || phase === "choose-mode" || phase === "redirecting" || phase === "analyzing") {
+      stopCamera();
+    }
+    return () => stopCamera();
+  }, [phase, stopCamera]);
+
   const saveMoodMutation = useMutation({
     mutationFn: async (data: { mood: MoodType; confidence: number }) => {
       return apiRequest("POST", "/api/mood", data);
@@ -101,9 +115,8 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
       } else {
         if (onComplete) {
           onComplete(detectedMood || "neutral");
-        } else {
-          setLocation("/");
         }
+        setLocation("/");
       }
     }, 1000);
   };
