@@ -41,7 +41,7 @@ export function useAuth() {
       email: "guest@example.com",
       profileImageUrl: null,
       isGuest: true,
-      hasCompletedTour: true,
+      hasCompletedTour: false,
       hasConsentedCamera: false,
       hasConsentedMic: false,
       hasConsentedData: false,
