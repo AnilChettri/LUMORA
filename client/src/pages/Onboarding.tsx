@@ -10,9 +10,9 @@ import { Card } from "@/components/ui/card";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { MoodType } from "@shared/schema";
 import { cn } from "@/lib/utils";
-import { Camera, Sparkles, ChevronRight, Brain } from "lucide-react";
+import { Camera, Sparkles, ChevronRight, Brain, Bot, Compass } from "lucide-react";
 
-type OnboardingPhase = "welcome" | "camera-scan" | "analyzing" | "result" | "redirecting";
+type OnboardingPhase = "welcome" | "camera-scan" | "analyzing" | "result" | "choose-mode" | "redirecting";
 
 const moodDetails: Record<MoodType, { label: string; bgColor: string; emoji: string }> = {
   happy: { label: "Happy", bgColor: "from-yellow-400 to-orange-400", emoji: "😊" },
@@ -85,11 +85,19 @@ export default function Onboarding() {
   const handleConfirm = () => {
     if (detectedMood) {
       saveMoodMutation.mutate({ mood: detectedMood, confidence });
-      setPhase("redirecting");
-      setTimeout(() => {
-        setLocation(`/voice?onboarding=true&initialMood=${detectedMood}`);
-      }, 1000);
+      setPhase("choose-mode");
     }
+  };
+
+  const handleChooseMode = (mode: "guided" | "manual") => {
+    setPhase("redirecting");
+    setTimeout(() => {
+      if (mode === "guided") {
+        setLocation(`/voice?onboarding=true&initialMood=${detectedMood}`);
+      } else {
+        setLocation("/");
+      }
+    }, 1000);
   };
 
   if (phase === "welcome") {
@@ -321,6 +329,82 @@ export default function Onboarding() {
                 </>
               )}
             </Button>
+          </motion.div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (phase === "choose-mode" && detectedMood) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-2xl w-full text-center"
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/20 text-purple-300 text-sm font-bold uppercase tracking-widest mb-6">
+              <Sparkles className="w-4 h-4" />
+              Choose Your Experience
+            </div>
+
+            <h2 className="text-4xl font-bold text-white mb-4">
+              How would you like to explore?
+            </h2>
+            <p className="text-white/50 text-lg mb-10">
+              Lumi detected you're feeling <span className="text-purple-400 font-bold">{moodDetails[detectedMood].label}</span>. Choose how you'd like to continue.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <motion.button
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+                onClick={() => handleChooseMode("guided")}
+                className="group relative p-8 rounded-3xl bg-gradient-to-br from-purple-600/20 to-pink-600/20 border border-purple-500/30 hover:border-purple-400/60 transition-all text-left"
+              >
+                <div className="absolute top-4 right-4 w-12 h-12 rounded-2xl bg-purple-500/20 flex items-center justify-center">
+                  <Bot className="w-6 h-6 text-purple-400" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-purple-300 transition-colors">
+                  Guided Tour
+                </h3>
+                <p className="text-white/60 mb-4">
+                  Lumi (AI agent) will guide you through all wellness spaces, track your activity, and provide personalized guidance.
+                </p>
+                <div className="flex items-center gap-2 text-purple-400 font-bold text-sm">
+                  <span>AI Agent Led</span>
+                  <ChevronRight className="w-4 h-4" />
+                </div>
+              </motion.button>
+
+              <motion.button
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
+                onClick={() => handleChooseMode("manual")}
+                className="group relative p-8 rounded-3xl bg-gradient-to-br from-teal-600/20 to-emerald-600/20 border border-teal-500/30 hover:border-teal-400/60 transition-all text-left"
+              >
+                <div className="absolute top-4 right-4 w-12 h-12 rounded-2xl bg-teal-500/20 flex items-center justify-center">
+                  <Compass className="w-6 h-6 text-teal-400" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-teal-300 transition-colors">
+                  Explore Myself
+                </h3>
+                <p className="text-white/60 mb-4">
+                  Browse all wellness spaces at your own pace. Music, exercises, journal, community, and more - all available to you.
+                </p>
+                <div className="flex items-center gap-2 text-teal-400 font-bold text-sm">
+                  <span>Full Freedom</span>
+                  <ChevronRight className="w-4 h-4" />
+                </div>
+              </motion.button>
+            </div>
           </motion.div>
         </motion.div>
       </div>
