@@ -4,20 +4,18 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { useAuth } from "@/hooks/useAuth";
-import { useOnboarding } from "@/hooks/useOnboarding";
 import { AppShell } from "@/components/layout/AppShell";
 import { LoadingSpinner } from "@/components/animations/LoadingSpinner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Suspense, lazy, useState, useEffect } from "react";
 
-// Eagerly loaded pages (small, frequently accessed)
+// Eagerly loaded pages
 import Landing from "@/pages/Landing";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 import NotFound from "@/pages/not-found";
 
-// Lazy loaded pages (heavy or less frequently accessed)
+// Lazy loaded pages
 const VoiceAgent = lazy(() => import("@/pages/VoiceAgent"));
 const Exercises = lazy(() => import("@/pages/Exercises"));
 const Community = lazy(() => import("@/pages/Community"));
@@ -29,130 +27,87 @@ const Crisis = lazy(() => import("@/pages/Crisis"));
 const Onboarding = lazy(() => import("@/pages/Onboarding"));
 const Analysis = lazy(() => import("@/pages/Analysis"));
 
-function AuthenticatedRoutes() {
-  return (
-    <ErrorBoundary fallbackMessage="Something went wrong with the app. Please try refreshing." showHomeButton>
-      <AppShell>
-        <Suspense fallback={
-          <div className="min-h-screen flex items-center justify-center">
-            <div className="text-center">
-              <LoadingSpinner size="lg" variant="neural" />
-              <p className="mt-4 text-muted-foreground">Loading...</p>
-            </div>
-          </div>
-        }>
-          <Switch>
-            <Route path="/onboarding" component={Onboarding} />
-            <Route path="/" component={Dashboard} />
-
-            {/* Voice Agent */}
-            <Route path="/voice">
-              {() => (
-                <ErrorBoundary
-                  fallbackMessage="We couldn't load the voice agent. Please try again."
-                  onReset={() => window.location.reload()}
-                >
-                  <VoiceAgent />
-                </ErrorBoundary>
-              )}
-            </Route>
-
-            <Route path="/exercises" component={Exercises} />
-            <Route path="/community" component={Community} />
-            <Route path="/journal" component={Journal} />
-            <Route path="/music" component={MusicSpace} />
-            <Route path="/books" component={BooksSpace} />
-            <Route path="/games" component={GamesSpace} />
-            <Route path="/crisis" component={Crisis} />
-            <Route path="/analysis" component={Analysis} />
-            
-            {/* Redirect /login to / for authenticated users */}
-            <Route path="/login">
-              {() => {
-                window.location.href = "/";
-                return null;
-              }}
-            </Route>
-
-            <Route component={NotFound} />
-          </Switch>
-        </Suspense>
-      </AppShell>
-    </ErrorBoundary>
-  );
-}
+type AppState = "landing" | "onboarding" | "dashboard";
 
 function Router() {
-  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
-  const { hasCompletedOnboarding, isLoading: isOnboardingLoading } = useOnboarding();
-  const [showFallback, setShowFallback] = useState(false);
-
-  const isLoading = isAuthLoading || (isAuthenticated && isOnboardingLoading);
+  const [appState, setAppState] = useState<AppState>("landing");
+  const [pendingMood, setPendingMood] = useState<string>("neutral");
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (isLoading) {
-        console.warn("Auth check timed out, falling back to unauthenticated view.");
-        setShowFallback(true);
-      }
-    }, 3000);
+    const savedState = localStorage.getItem("lumi_app_state") as AppState;
+    if (savedState && savedState !== "landing") {
+      setAppState(savedState);
+    }
+  }, []);
 
-    return () => clearTimeout(timer);
-  }, [isLoading]);
+  const handleLogin = () => {
+    setAppState("onboarding");
+    localStorage.setItem("lumi_app_state", "onboarding");
+  };
 
-  if (isAuthLoading && !showFallback) {
+  const handleOnboardingComplete = (mood: string) => {
+    setPendingMood(mood);
+    setAppState("dashboard");
+    localStorage.setItem("lumi_app_state", "dashboard");
+  };
+
+  const handleLogout = () => {
+    setAppState("landing");
+    localStorage.removeItem("lumi_app_state");
+    localStorage.removeItem("lumi_guest_user");
+  };
+
+  if (appState === "onboarding") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <LoadingSpinner size="lg" variant="neural" />
-          <p className="mt-4 text-muted-foreground">Loading Lumi...</p>
-        </div>
-      </div>
+      <Onboarding
+        onComplete={handleOnboardingComplete}
+      />
     );
   }
 
-  // User is not authenticated - show Landing/Login
-  if (!isAuthenticated) {
+  if (appState === "dashboard") {
     return (
-      <Switch>
-        <Route path="/crisis" component={Crisis} />
-        <Route path="/login" component={Login} />
-        <Route path="/onboarding" component={Onboarding} />
-        <Route component={Landing} />
-      </Switch>
+      <ErrorBoundary fallbackMessage="Something went wrong. Please try refreshing." showHomeButton>
+        <AppShell onLogout={handleLogout}>
+          <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+              <LoadingSpinner size="lg" variant="neural" />
+            </div>
+          }>
+            <Switch>
+              <Route path="/" component={Dashboard} />
+              <Route path="/voice" component={VoiceAgent} />
+              <Route path="/exercises" component={Exercises} />
+              <Route path="/community" component={Community} />
+              <Route path="/journal" component={Journal} />
+              <Route path="/music" component={MusicSpace} />
+              <Route path="/books" component={BooksSpace} />
+              <Route path="/games" component={GamesSpace} />
+              <Route path="/crisis" component={Crisis} />
+              <Route path="/analysis" component={Analysis} />
+              <Route component={NotFound} />
+            </Switch>
+          </Suspense>
+        </AppShell>
+      </ErrorBoundary>
     );
   }
 
-  // Authenticated - check onboarding status
-  if (isOnboardingLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <LoadingSpinner size="lg" variant="neural" />
-          <p className="mt-4 text-muted-foreground">Loading Lumi...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Authenticated but hasn't completed onboarding - redirect to onboarding
-  if (!hasCompletedOnboarding) {
-    return (
-      <Switch>
-        <Route path="/onboarding" component={Onboarding} />
-        <Route path="/crisis" component={Crisis} />
-        <Route>
-          {() => {
-            window.location.href = "/onboarding";
-            return null;
-          }}
-        </Route>
-      </Switch>
-    );
-  }
-
-  // Authenticated and onboarded - show main app
-  return <AuthenticatedRoutes />;
+  // Landing state
+  return (
+    <Switch>
+      <Route path="/crisis" component={Crisis} />
+      <Route path="/login">
+        {() => {
+          handleLogin();
+          return null;
+        }}
+      </Route>
+      <Route>
+        {() => <Landing onLogin={handleLogin} />}
+      </Route>
+    </Switch>
+  );
 }
 
 function App() {

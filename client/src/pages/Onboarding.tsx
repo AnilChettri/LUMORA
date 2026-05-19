@@ -23,7 +23,11 @@ const moodDetails: Record<MoodType, { label: string; bgColor: string; emoji: str
   neutral: { label: "Neutral", bgColor: "from-teal-400 to-cyan-400", emoji: "😐" },
 };
 
-export default function Onboarding() {
+interface OnboardingProps {
+  onComplete?: (mood: string) => void;
+}
+
+export default function Onboarding({ onComplete }: OnboardingProps) {
   const [, setLocation] = useLocation();
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -92,10 +96,10 @@ export default function Onboarding() {
   const handleChooseMode = (mode: "guided" | "manual") => {
     setPhase("redirecting");
     setTimeout(() => {
-      if (mode === "guided") {
-        setLocation(`/voice?onboarding=true&initialMood=${detectedMood}`);
+      if (onComplete) {
+        onComplete(detectedMood || "neutral");
       } else {
-        setLocation("/");
+        setLocation(mode === "guided" ? `/voice?onboarding=true&initialMood=${detectedMood}` : "/");
       }
     }, 1000);
   };
